@@ -1,11 +1,20 @@
 {
-  "name": "roadpulse-traffic-parking",
-  "version": "1.0.0",
+  "name": "roadpulse-city-atlas",
+  "version": "2.0.0",
   "private": true,
-  "description": "Mobile-first traffic, parking and globe map — zero build dependencies",
+  "type": "module",
   "scripts": {
-    "dev": "npx vercel dev",
-    "start": "npx vercel dev"
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0"
   },
-  "engines": { "node": ">=20" }
+  "dependencies": {
+    "maplibre-gl": "6.14.0"
+  },
+  "devDependencies": {
+    "vite": "6.3.6"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
 }

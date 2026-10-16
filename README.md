@@ -22,7 +22,7 @@ The app does **not** invent congestion values, free spaces, occupancy percentage
 
 1. Create a GitHub repository, and upload all files **at the project root**, keeping `api/` and `assets/` folders intact.
 2. In [Vercel](https://vercel.com/new), import the GitHub repository.
-3. Set **Framework Preset: Other**. No build command, no output directory, no npm dependencies. Deploy.
+3. Set **Framework Preset: Vite**. Vite framework; the Vercel build installs MapLibre and packages the JS locally. Vercel build command: `npm run build`; output directory `dist`. Deploy.
 4. Parking, globe, map and routing use external public services and can work immediately on deployment.
 5. To activate live traffic, create a TomTom developer key with Orbis Traffic Flow API access. In Vercel → Project → Settings → Environment Variables, create `TOMTOM_API_KEY` for Production (and Preview if wanted). Then **redeploy**.
 6. The key is only referenced in `/api/traffic.js` (server-side) and is never embedded in browser scripts or map URL sent to TomTom directly.
@@ -71,3 +71,12 @@ Do not commit real credentials. Change env vars in Vercel and redeploy if needed
 ## Next extensions
 
 Real vacant parking spaces require licensed municipality/operator APIs. A scalable production release should add telemetry/monitoring, edge rate-limiting, a contracted geocoder/router, provider quota handling and dedicated accessibility testing on device.
+
+## October 2026 map resilience upgrade
+
+- MapLibre GL 6.14.0 is now bundled locally by Vite, removing the previous fragile unpkg runtime dependency.
+- The no-key vector basemap uses OpenFreeMap Liberty/Dark. If the vector source fails to initialize, the application switches to the OpenStreetMap raster map (also no API key; OSM tile usage limits apply).
+- Both 2D and 3D globe use MapLibre GL, which requires WebGL support from the user's device/browser.
+- The free parking service attempts multiple Overpass API instances concurrently and remains subject to upstream availability and rate limiting. No fake vacancies or occupancy numbers.
+- Live TomTom traffic still requires the optional TomTom key; the map/globe never require it.
+- New warm ivory, cobalt, periwinkle and coral UI palette; dark version uses midnight-blue.

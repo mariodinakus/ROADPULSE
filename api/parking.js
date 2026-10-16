@@ -1,5 +1,6 @@
 const instances = [
   'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
   'https://overpass.nchc.org.tw/api/interpreter',
   'https://overpass-api.de/api/interpreter'
 ];
@@ -18,16 +19,15 @@ module.exports = async function handler(req,res) {
     return res.status(400).json({error:'Invalid coordinates'});
   }
   const q=`[out:json][timeout:17];(nwr(around:${Math.round(radius)},${lat},${lon})["amenity"="parking"];nwr(around:${Math.round(radius)},${lat},${lon})["parking"="street_side"];);out center 260;`;
-  for (const instance of instances) {
-    try {
-      const r=await fetch(instance,{
+  async function fetchFrom(instance){
+    const r=await fetch(instance,{
         method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded','User-Agent':'RoadPulse/1.0 (OpenStreetMap community map; https://github.com)'},
         body:new URLSearchParams({data:q}).toString(),
-        signal:AbortSignal.timeout(10000)
+        signal:AbortSignal.timeout(12000)
       });
-      if(!r.ok) continue;
+      if(!r.ok) throw Error('OSM HTTP '+r.status);
       const data=await r.json();
-      if (!Array.isArray(data.elements)) continue;
+      if (!Array.isArray(data.elements)) throw Error('Invalid Overpass response');
       const entries=[];
       const seen=new Set();
       for(const item of data.elements){
@@ -53,10 +53,18 @@ module.exports = async function handler(req,res) {
         });
       }
       entries.sort((a,b)=>a.distanceKm-b.distanceKm);
-      res.setHeader('Cache-Control','public, max-age=0, s-maxage=180, stale-while-revalidate=300');
-      return res.status(200).json({items:entries.slice(0,160),count:entries.length,source:'OpenStreetMap / Overpass',asOf:new Date().toISOString(),liveOccupancy:false});
-    } catch { /* Try the next public Overpass instance. */ }
+      return {items:entries.slice(0,160),count:entries.length,source:'OpenStreetMap / Overpass',asOf:new Date().toISOString(),liveOccupancy:false};
   }
-  res.setHeader('Cache-Control','no-store');
-  return res.status(503).json({error:'The OpenStreetMap parking service is temporarily unavailable. Try again.'});
+  // Two providers in parallel avoids long serial timeouts in serverless functions.
+  try {
+    const payload=await Promise.any(instances.map(async (instance,index)=>{
+      if(index>1)await new Promise(resolve=>setTimeout(resolve,1800));
+      return fetchFrom(instance);
+    }));
+    res.setHeader('Cache-Control','public, max-age=0, s-maxage=240, stale-while-revalidate=600');
+    return res.status(200).json(payload);
+  }catch(error){
+    res.setHeader('Cache-Control','no-store');
+    return res.status(503).json({error:'OpenStreetMap parking providers are currently unreachable. Please retry.'});
+  }
 };
