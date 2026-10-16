@@ -30,18 +30,38 @@
   function toast(message,error=false){const el=document.createElement('div');el.className=`toast${error?' error':''}`;el.textContent=message;$('toastWrap').appendChild(el);window.setTimeout(()=>el.remove(),3500);}
   function updateClock(){$('mapTime').textContent=new Intl.DateTimeFormat(state.lang==='el'?'el-GR':'en-GB',{timeZone:'Europe/Athens',hour:'2-digit',minute:'2-digit'}).format(new Date());}
   function setLang(next){state.lang=next;localStorage.setItem('rp-lang',JSON.stringify(next));document.documentElement.lang=next;for(const el of document.querySelectorAll('[data-i18n]'))el.textContent=t(el.dataset.i18n);$('langBtn').textContent=next==='el'?'EN':'ΕΛ';$('searchInput').placeholder=t('searchPlaceholder');document.querySelectorAll('.chip[data-city]').forEach(el=>{el.textContent=cities[el.dataset.city]?.[next]||el.textContent;});document.querySelectorAll('.explore-cities [data-city]').forEach(el=>{el.innerHTML=clean(cities[el.dataset.city]?.[next]||'')+' '+svg('arrow');});updatePanelHeading();updateCityLabel();updateRouteFieldLabels();updateTrafficUI();renderParkings();renderFocus();renderRouteResult();updateClock();}
-  const vectorStyles={light:'https://tiles.openfreemap.org/styles/liberty',dark:'https://tiles.openfreemap.org/styles/dark'};
-  const rasterFallback={version:8,name:'OpenStreetMap fallback',sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,maxzoom:19,attribution:'© OpenStreetMap contributors'}},layers:[{id:'osm-fallback',type:'raster',source:'osm'}]};
-  let fallbackActive=false, mapLoadTimer=null, mapStyleFaults=0;
-  function useFallbackStyle(){if(!map||fallbackActive)return;fallbackActive=true;mapStyleFaults=0;try{map.setStyle(rasterFallback);toast(state.lang==='el'?'Ενεργοποιήθηκε εφεδρικός χάρτης OpenStreetMap.':'Switched to the OpenStreetMap fallback.');}catch(error){console.error('OSM fallback error',error);}}
-  function setTheme(next){state.theme=next;document.body.dataset.theme=next;localStorage.setItem('rp-theme-v2',JSON.stringify(next));$('themeBtn').innerHTML=svg(next==='dark'?'sun':'moon');if(map){fallbackActive=false;mapStyleFaults=0;map.setStyle(vectorStyles[next]);}}
+  // 100% keyless basemap. OpenStreetMap raster tiles need NO access token.
+  // OpenFreeMap vector tiles are a second keyless option if OSM tiles fail.
+  const osmStyle={version:8,name:'OpenStreetMap standard',sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,maxzoom:19,attribution:'© OpenStreetMap contributors'}},layers:[{id:'osm-base',type:'raster',source:'osm'}]};
+  const openFreeMapStyle='https://tiles.openfreemap.org/styles/liberty';
+  let mapProvider='osm', mapWatchdog=null, mapStyleFaults=0, mapGoodTiles=0, fallbackFrame=null;
+  function osmUrl(){const c=state.center,dx=.032,dy=.019;const bbox=[c.lon-dx,c.lat-dy,c.lon+dx,c.lat+dy].join(',');return 'https://www.openstreetmap.org/export/embed.html?bbox='+encodeURIComponent(bbox)+'&layer=mapnik&marker='+encodeURIComponent(c.lat+','+c.lon);}
+  function mapLink(){return 'https://www.openstreetmap.org/#map/13/'+state.center.lat+'/'+state.center.lon;}
+  function setIframeFallback(message){
+    if(fallbackFrame)return;
+    const host=$('map');
+    fallbackFrame=document.createElement('div');fallbackFrame.className='osm-iframe-shell';
+    const notice=document.createElement('div');notice.className='osm-iframe-notice';notice.textContent=message || (state.lang==='el'?'Εφεδρικός χάρτης OpenStreetMap — χωρίς API key':'OpenStreetMap backup — no API key');
+    const iframe=document.createElement('iframe');iframe.src=osmUrl();iframe.title='OpenStreetMap';iframe.loading='eager';iframe.referrerPolicy='strict-origin-when-cross-origin';
+    const link=document.createElement('a');link.href=mapLink();link.target='_blank';link.rel='noopener';link.textContent=state.lang==='el'?'Άνοιγμα πλήρους χάρτη ↗':'Open full map ↗';
+    fallbackFrame.append(notice,iframe,link);host.append(fallbackFrame);
+  }
+  function updateIframePosition(){if(!fallbackFrame)return;const iframe=fallbackFrame.querySelector('iframe');const link=fallbackFrame.querySelector('a');if(iframe)iframe.src=osmUrl();if(link)link.href=mapLink();}
+  function nextMapProvider(){
+    if(!map || mapGoodTiles>0 || mapProvider!=='osm')return;
+    mapProvider='openfreemap';mapStyleFaults=0;
+    try{map.setStyle(openFreeMapStyle);toast(state.lang==='el'?'Δοκιμή δεύτερου χάρτη χωρίς API key…':'Trying another free map…');}
+    catch(error){console.warn('Map style fallback:',error);setIframeFallback();}
+    clearTimeout(mapWatchdog);mapWatchdog=window.setTimeout(()=>{if(!mapGoodTiles)setIframeFallback();},9500);
+  }
+  function setTheme(next){state.theme=next;document.body.dataset.theme=next;localStorage.setItem('rp-theme-v2',JSON.stringify(next));$('themeBtn').innerHTML=svg(next==='dark'?'sun':'moon');}
 
   function updatePanelHeading(){const names={parking:'Parking',route:'Route',explore:'Explore'};const titles={parking:'titleParking',route:'titleRoute',explore:'titleExplore'},descs={parking:'descParking',route:'descRoute',explore:'descExplore'};$('panelTitle').innerHTML=clean(t(titles[state.tab]))+'<span>.</span>';$('panelDesc').textContent=t(descs[state.tab]);}
   function updateCityLabel(){const city=cities[state.city];const name=city?city[state.lang]:state.lang==='el'?'Περιοχή χάρτη':'Map location';$('cityName').textContent=name;$('citySub').textContent=city?({GR:state.lang==='el'?'Ελλάδα':'Greece',UK:'United Kingdom',US:'United States',JP:'Japan'}[city.country]||city.country):`${coord(state.center.lat)}, ${coord(state.center.lon)}`;$('mapPlace').textContent=city?`${city.en.toUpperCase()}, ${city.country}`:`${coord(state.center.lat)}°, ${coord(state.center.lon)}°`;$('coordLabel').textContent=`${coord(state.center.lat)}° N, ${coord(state.center.lon)}° E`;$('mapTagline').textContent=t('mapTag');document.querySelectorAll('[data-city]').forEach(btn=>btn.classList.toggle('selected',btn.dataset.city===state.city));const c=state.center;$('googleTrafficLink').href=`https://www.google.com/maps/@${c.lat},${c.lon},13z/data=!5m1!1e1`;}
   function switchTab(tab){state.tab=tab;for(const kind of ['parking','route','explore'])$(kind+'Panel').classList.toggle('hidden',kind!==tab);document.querySelectorAll('[data-tab]').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===tab));updatePanelHeading();}
   function getLocation(fly=true){if(!navigator.geolocation){toast(t('locationFailed'),true);return;}
-    toast(t('locating'));navigator.geolocation.getCurrentPosition(pos=>{const ll={lat:pos.coords.latitude,lon:pos.coords.longitude};state.myLocation=ll;state.origin={...ll,label:t('position')};addRouteMarkers();addUserMarker();updateRouteFieldLabels();if(fly){state.center={lat:ll.lat,lon:ll.lon};state.city=null;map?.flyTo({center:[ll.lon,ll.lat],zoom:14.2});updateCityLabel();loadParking();}toast(t('positionFound'));},err=>toast(err.code===1?t('permissionDenied'):t('locationFailed'),true),{enableHighAccuracy:true,timeout:12000,maximumAge:60000});}
-  function cityClick(id){const city=cities[id];if(!city)return;state.city=id;state.center={lat:city.lat,lon:city.lon};state.selectedId=null;state.destination=null;state.origin=null;state.route=null;renderFocus();updateRouteFieldLabels();setGlobe(false);map?.flyTo({center:[city.lon,city.lat],zoom:city.zoom,duration:1350});updateCityLabel();loadParking();}
+    toast(t('locating'));navigator.geolocation.getCurrentPosition(pos=>{const ll={lat:pos.coords.latitude,lon:pos.coords.longitude};state.myLocation=ll;state.origin={...ll,label:t('position')};addRouteMarkers();addUserMarker();updateRouteFieldLabels();if(fly){state.center={lat:ll.lat,lon:ll.lon};state.city=null;map?.flyTo({center:[ll.lon,ll.lat],zoom:14.2});updateCityLabel();updateIframePosition();loadParking();}toast(t('positionFound'));},err=>toast(err.code===1?t('permissionDenied'):t('locationFailed'),true),{enableHighAccuracy:true,timeout:12000,maximumAge:60000});}
+  function cityClick(id){const city=cities[id];if(!city)return;state.city=id;state.center={lat:city.lat,lon:city.lon};state.selectedId=null;state.destination=null;state.origin=null;state.route=null;renderFocus();updateRouteFieldLabels();setGlobe(false);map?.flyTo({center:[city.lon,city.lat],zoom:city.zoom,duration:1350});updateCityLabel();updateIframePosition();loadParking();}
   function setGlobe(value){state.globe=value;try{map?.setProjection({type:value?'globe':'mercator'});}catch(err){console.warn('Projection failed',err);}$('mapMode2d').classList.toggle('active',!value);$('mapModeGlobe').classList.toggle('active',value);$('projectionLabel').textContent=value?'GLOBE':'MERCATOR';if(value){map?.flyTo({center:[18,35],zoom:1.6,duration:1500,pitch:0});switchTab('explore');}else{map?.flyTo({center:[state.center.lon,state.center.lat],zoom:Math.max(map?.getZoom()<4?12:map?.getZoom()||12,11),duration:900});}}
   function parkingMatches(p){if(state.filter==='covered')return ['multi-storey','underground'].includes(p.type);if(state.filter==='all')return true;return p.fee===state.filter;}
   function getFiltered(){return state.parking.filter(parkingMatches);}
@@ -80,7 +100,7 @@
   async function performSearch(query){const value=query.trim();if(value.length<3){toast(t('searchHint'),true);return;}const node=$('searchResults');node.classList.remove('hidden');node.innerHTML='<div class="search-msg">…</div>';
     try{const params=new URLSearchParams({q:value,lang:state.lang,lat:String(state.center.lat),lon:String(state.center.lon)});const r=await fetch(`/api/search?${params}`);const json=await r.json();if(!r.ok)throw new Error(json.error);state.searchItems=json.items||[];node.innerHTML=state.searchItems.length?state.searchItems.map((item,i)=>`<button class="search-result" data-result="${i}">${svg('pin')}<span>${clean(item.name||item.detail)}</span></button>`).join(''):`<div class="search-msg">${clean(t('searchEmpty'))}</div>`;}
     catch{node.innerHTML=`<div class="search-msg">${clean(t('searchFail'))}</div>`;}}
-  function chooseSearch(index){const item=state.searchItems[index];if(!item)return;state.center={lat:item.lat,lon:item.lon};state.city=null;state.selectedId=null;state.route=null;state.destination=null;$('searchInput').value=item.name;state.searchItems=[];$('searchResults').classList.add('hidden');setGlobe(false);map?.flyTo({center:[item.lon,item.lat],zoom:13.7,duration:1350});updateCityLabel();updateRouteFieldLabels();loadParking();}
+  function chooseSearch(index){const item=state.searchItems[index];if(!item)return;state.center={lat:item.lat,lon:item.lon};state.city=null;state.selectedId=null;state.route=null;state.destination=null;$('searchInput').value=item.name;state.searchItems=[];$('searchResults').classList.add('hidden');setGlobe(false);map?.flyTo({center:[item.lon,item.lat],zoom:13.7,duration:1350});updateCityLabel();updateIframePosition();updateRouteFieldLabels();loadParking();}
   function updateTrafficUI(){$('trafficToggle').disabled=!state.trafficEnabled;$('trafficToggle').checked=state.trafficEnabled&&state.trafficOn;$('trafficStatus').textContent=state.trafficEnabled?(state.trafficOn?t('trafficOn'):t('trafficReady')):t('trafficOff');$('trafficNoKey').classList.toggle('hidden',state.trafficEnabled);$('trafficLegend').classList.toggle('hidden',!state.trafficEnabled||!state.trafficOn);}
   function redrawTraffic(){if(!map||!map.isStyleLoaded())return;if(map.getLayer('live-traffic'))map.removeLayer('live-traffic');if(map.getSource('live-traffic'))map.removeSource('live-traffic');if(!state.trafficEnabled||!state.trafficOn)return;
     map.addSource('live-traffic',{type:'raster',tiles:[`/api/traffic?z={z}&x={x}&y={y}&theme=${state.theme==='dark'?'dark':'light'}&v=${state.trafficRefresh}`],tileSize:256,minzoom:0,maxzoom:22});map.addLayer({id:'live-traffic',type:'raster',source:'live-traffic',paint:{'raster-opacity':0.88,'raster-fade-duration':0}});
@@ -89,26 +109,40 @@
   async function loadConfig(){try{const r=await fetch('/api/config');const d=await r.json();state.trafficEnabled=!!d.trafficEnabled;state.trafficOn=state.trafficEnabled;state.trafficRefresh=Date.now();updateTrafficUI();redrawTraffic();}catch{state.trafficEnabled=false;state.trafficOn=false;updateTrafficUI();}}
   function mapOverlay(){if(!map||!map.isStyleLoaded())return;if(!map.getSource('route-geo')){map.addSource('route-geo',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'route-casing',type:'line',source:'route-geo',paint:{'line-color':'#0c1720','line-width':10,'line-opacity':.8}});map.addLayer({id:'route-line',type:'line',source:'route-geo',paint:{'line-color':'#b6ef65','line-width':6,'line-opacity':.95}});}drawRoute();redrawTraffic();}
   function initMap(){
-    if(typeof maplibregl==='undefined'){$('map').innerHTML=`<div class="map-load-error">${clean(t('mapUnavailable'))}</div>`;return;}
     const host=$('map');
+    if(typeof maplibregl==='undefined'){
+      setIframeFallback(state.lang==='el'?'Προβολή OpenStreetMap χωρίς WebGL':'OpenStreetMap view without WebGL');
+      return;
+    }
     if(!maplibregl.supported()){
-      host.innerHTML='<div class="map-load-error">'+clean(state.lang==='el'?'Το πρόγραμμα περιήγησης δεν υποστηρίζει WebGL. Δοκίμασε Chrome ή Firefox.':'This browser does not support WebGL. Try Chrome or Firefox.')+'</div>';
+      setIframeFallback(state.lang==='el'?'Ο browser δεν διαθέτει WebGL — διαθέσιμος ο κανονικός χάρτης':'No WebGL — standard map available');
       return;
     }
     try{
-      map=new maplibregl.Map({container:'map',style:vectorStyles[state.theme],center:[state.center.lon,state.center.lat],zoom:12.6,attributionControl:true,minZoom:1,maxZoom:19,antialias:true,pitchWithRotate:true,renderWorldCopies:false});
-    }catch(error){console.error('Map creation failed:',error);host.innerHTML=`<div class="map-load-error">${clean(t('mapUnavailable'))}</div>`;return;}
-    map.on('style.load',()=>{clearTimeout(mapLoadTimer);mapStyleFaults=0;try{map.setProjection({type:state.globe?'globe':'mercator'});}catch(err){console.warn('Projection unavailable',err);}mapOverlay();});
+      map=new maplibregl.Map({container:'map',style:osmStyle,center:[state.center.lon,state.center.lat],zoom:12.6,attributionControl:true,minZoom:1,maxZoom:19,antialias:true,pitchWithRotate:true,renderWorldCopies:false});
+    }catch(error){console.error('Map creation failed:',error);setIframeFallback();return;}
+    map.on('style.load',()=>{
+      try{map.setProjection({type:state.globe?'globe':'mercator'});}catch(err){console.warn('Projection unavailable',err);}
+      // A style can load even if its remote tiles cannot, so track sourcedata below.
+      mapOverlay();
+    });
+    map.on('sourcedata',e=>{
+      if(e.sourceId==='osm'&&e.isSourceLoaded&&mapProvider==='osm'){
+        mapGoodTiles++;clearTimeout(mapWatchdog);
+      }else if(mapProvider==='openfreemap'&&e.isSourceLoaded){
+        mapGoodTiles++;clearTimeout(mapWatchdog);
+      }
+    });
+    map.on('idle',()=>{if(map&&map.areTilesLoaded()){mapGoodTiles++;clearTimeout(mapWatchdog);mapOverlay();}});
     map.on('zoomend',()=>{$('mapZoomLabel').textContent=`ZOOM ${map.getZoom().toFixed(1)}`;});
     map.on('click',event=>{if(!state.pick)return;const ll={lat:event.lngLat.lat,lon:event.lngLat.lng};if(state.pick==='start'){state.origin={...ll,label:`${coord(ll.lat)}, ${coord(ll.lon)}`};toast(t('originSet'));}else{state.destination={...ll,label:`${coord(ll.lat)}, ${coord(ll.lon)}`};toast(t('destinationSet'));}state.route=null;drawRoute();renderRouteResult();updateRouteFieldLabels();clearPick();switchTab('route');});
     map.on('error',e=>{
       const message=String(e.error?.message||'');
       if(message.includes('traffic'))return;
-      if(fallbackActive)return;
-      if(++mapStyleFaults>=3&&!map.isStyleLoaded())useFallbackStyle();
+      console.warn('MapLibre resource failure:',message);
+      if(!mapGoodTiles&&++mapStyleFaults>=5)nextMapProvider();
     });
-    // If a public vector provider is blocked, automatically use OSM raster tiles.
-    mapLoadTimer=window.setTimeout(()=>{if(map&&!map.isStyleLoaded())useFallbackStyle();},10500);
+    mapWatchdog=window.setTimeout(()=>{if(!mapGoodTiles)nextMapProvider();},7500);
   }
   function bind(){document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
     document.querySelectorAll('[data-city]').forEach(btn=>btn.addEventListener('click',()=>cityClick(btn.dataset.city)));
@@ -130,6 +164,6 @@
     window.addEventListener('keydown',e=>{if(e.key==='Escape'){clearPick();$('searchResults').classList.add('hidden');}});
     trafficInterval=window.setInterval(()=>{if(state.trafficEnabled&&state.trafficOn){state.trafficRefresh=Date.now();redrawTraffic();}},90_000);
   }
-  function start(){document.body.dataset.theme=state.theme;setLang(state.lang);bind();initMap();loadConfig();loadParking();updateClock();window.setInterval(updateClock,30_000);if('serviceWorker' in navigator && location.protocol==='https:'){navigator.serviceWorker.register('/sw.js').catch(()=>{});}}
+  function start(){document.body.dataset.theme=state.theme;setLang(state.lang);bind();initMap();loadConfig();loadParking();updateClock();window.setInterval(updateClock,30_000);if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(regs=>Promise.all(regs.filter(r=>r.scope.startsWith(location.origin)).map(r=>r.unregister()))).catch(()=>{});if('caches' in window)caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('roadpulse-shell-')).map(k=>caches.delete(k)))).catch(()=>{});}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();

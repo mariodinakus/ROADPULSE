@@ -80,3 +80,8 @@ Real vacant parking spaces require licensed municipality/operator APIs. A scalab
 - The free parking service attempts multiple Overpass API instances concurrently and remains subject to upstream availability and rate limiting. No fake vacancies or occupancy numbers.
 - Live TomTom traffic still requires the optional TomTom key; the map/globe never require it.
 - New warm ivory, cobalt, periwinkle and coral UI palette; dark version uses midnight-blue.
+
+## Keyless resilient maps (v2.1)
+The default 2D map and 3D globe use MapLibre GL and OpenStreetMap tiles without API keys. If tile loading fails, the app retries with OpenFreeMap. If WebGL is unavailable, a standard OpenStreetMap iframe is shown instead. These public tile services still require an internet connection, allow fair-use only, and may have temporary outages. Live road-traffic overlays still need a licensed provider.
+
+If a previous version persists in a browser, clear site data once. This release unregisters earlier ROADPULSE service workers and removes legacy app shell caches to reduce staleness.
