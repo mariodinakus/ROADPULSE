@@ -147,3 +147,5 @@ body[data-theme="dark"] .city-current strong{color:#fafcff}
 
 /* Independent keyless fallback: if WebGL or both basemap services fail, never show a blank map. */
 #map{isolation:isolate} .osm-iframe-shell{position:absolute;inset:0;z-index:12;display:flex;flex-direction:column;background:#eff3fa} .osm-iframe-shell iframe{border:0;flex:1;width:100%;min-height:160px} .osm-iframe-notice{font-size:12px;text-align:center;font-weight:700;padding:9px;color:#243c64;background:#ecf3fc} .osm-iframe-shell a{display:block;padding:9px 14px;text-align:center;font-weight:800;color:#204dd0;background:white;font-size:12px} body[data-theme=dark] .osm-iframe-notice{background:#172a44;color:#eff7ff}
+
+.map-rescue{position:absolute;right:24px;bottom:54px;z-index:25;background:#1c4ece;color:#fff;border:1px solid #275ff1;border-radius:18px;font-size:11px;font-weight:800;box-shadow:0 8px 24px #00173935;padding:11px 14px;max-width:200px} .map-rescue:hover{background:#133caa} @media(max-width:720px){.map-rescue{right:14px;bottom:64px;font-size:10px;padding:9px 11px}}
