@@ -1,0 +1,59 @@
+/* ROADPULSE 3.4 Pressure Labs · standalone extension */
+.pressure-peek{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.pressure-peek-item{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;border:1px solid var(--border);background:var(--citysurface);border-radius:14px;padding:12px 11px;cursor:pointer;color:var(--ink);transition:border-color .2s,transform .2s,box-shadow .2s}
+.pressure-peek-item:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 8px 16px #152d4b15}
+.pressure-peek-item .peek-kicker{font-size:9px;line-height:1.3;font-weight:900;letter-spacing:.6px;color:var(--blue)}
+.pressure-peek-item strong{display:block;font-family:'Space Grotesk','DM Sans',sans-serif;font-size:26px;letter-spacing:-1px;line-height:1.15;color:var(--ink);font-variant-numeric:tabular-nums}
+.pressure-peek-item small{font-size:9px;line-height:1.4;color:var(--sub)}
+.pressure-peek-item:last-child{background:linear-gradient(140deg,var(--white),var(--blue-lite))}
+.pressure-hero-title{margin-bottom:9px!important}
+.lab-switch{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:18px 0 19px}
+.lab-switch button{min-width:0;border:1px solid var(--border);background:var(--citysurface);border-radius:15px;padding:14px 9px;display:grid;grid-template-columns:27px 1fr;grid-template-rows:auto auto;text-align:left;align-items:center;gap:1px 7px;color:var(--ink);cursor:pointer;transition:background .2s,box-shadow .2s,border-color .2s}
+.lab-switch button span{grid-row:1/3;font-size:26px;color:var(--blue);text-align:center}
+.lab-switch button b{font-size:11px;letter-spacing:.65px;min-width:0}
+.lab-switch button small{font-size:8px;font-weight:850;color:var(--sub);letter-spacing:.45px;white-space:nowrap}
+.lab-switch button.active{background:var(--blue-lite);border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),0 8px 18px #285bf017}
+.lab-switch button:hover{border-color:var(--blue)}
+.lab-switch button:focus-visible,.pressure-peek-item:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+#parkingPressurePanel[hidden],#trafficPressurePanel[hidden],.pressure-error[hidden]{display:none!important}
+.traffic-pressure-card{margin-top:18px}
+.pressure-source-status{font-size:9px;letter-spacing:.4px;color:var(--blue);font-weight:900}
+.traffic-score-wrap{display:flex;align-items:center;gap:15px;background:var(--citysurface);border-radius:15px;padding:14px 12px;margin:8px 0 15px;min-width:0}
+.traffic-score-dial{width:95px;height:95px;flex:0 0 95px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;color:var(--ink);background:conic-gradient(#28b7a3 calc(var(--pressure)*1%),var(--border) 0);font-family:'Space Grotesk','DM Sans',Arial,sans-serif;font-variant-numeric:tabular-nums}
+.traffic-score-dial[data-level="medium"]{background:conic-gradient(#e9a63f calc(var(--pressure)*1%),var(--border) 0)}
+.traffic-score-dial[data-level="high"]{background:conic-gradient(#e75c57 calc(var(--pressure)*1%),var(--border) 0)}
+.traffic-score-dial:before{content:'';position:absolute;inset:9px;background:var(--white);border-radius:50%;box-shadow:inset 0 1px 5px #22345010}
+.traffic-score-dial strong,.traffic-score-dial small{z-index:1;line-height:1}
+.traffic-score-dial strong{font-size:29px;letter-spacing:-1.2px}
+.traffic-score-dial small{font-size:11px;margin-top:3px;color:var(--sub)}
+.traffic-score-copy{min-width:0;display:flex;flex-direction:column;gap:8px}
+.traffic-score-copy strong{line-height:1.3;font-size:15px;letter-spacing:-.3px;overflow-wrap:anywhere}
+.traffic-score-copy small{font-size:10px;line-height:1.4;color:var(--sub)}
+.traffic-score-copy span{font-size:9px;line-height:1.35;color:var(--blue);font-weight:850}
+.traffic-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.traffic-kpis>div{padding:10px 8px;background:var(--citysurface);border-radius:11px;min-width:0}
+.traffic-kpis small{display:block;line-height:1.35;color:var(--sub);font-size:9px;min-height:28px}
+.traffic-kpis strong{font-weight:900;letter-spacing:-.3px;font-family:'Space Grotesk','DM Sans',sans-serif;font-size:14px;white-space:nowrap}
+.pressure-traffic-heading{margin-top:23px;margin-bottom:12px;display:flex;flex-direction:column;gap:4px}
+.pressure-traffic-heading b{font-size:12px}
+.pressure-traffic-heading small{color:var(--sub);font-size:9px}
+.traffic-segment-bars{display:flex;flex-direction:column;gap:13px}
+.traffic-segment-bars>p{padding:15px 12px;background:var(--citysurface);font-size:11px;line-height:1.6;color:var(--sub);border-radius:10px}
+.flow-sample{padding:1px 0}
+.flow-sample-head{display:flex;justify-content:space-between;align-items:center;font-size:10px;margin-bottom:6px;gap:8px}
+.flow-sample-head b{font-size:10px}
+.flow-sample-head span{font-size:10px;font-weight:800;font-variant-numeric:tabular-nums}
+.flow-track{height:11px;width:100%;border-radius:20px;background:var(--citysurface);overflow:hidden}
+.flow-fill{display:block;height:100%;border-radius:20px;transition:width .45s ease;background:#24b19b}
+.flow-fill.medium{background:#e8a03d}.flow-fill.high{background:#e7615d}
+.flow-sample small{color:var(--sub);font-size:9px;line-height:1.5;display:block;margin-top:5px}
+#refreshTrafficPressure{margin-top:20px;width:100%;display:flex;justify-content:space-between;align-items:center;text-align:left;border-radius:11px;padding:12px 15px}
+#refreshTrafficPressure:disabled{opacity:.55;cursor:progress}
+.pressure-error{padding:12px 14px;background:#fff0e9;border:1px solid #eac5b4;color:#ae493e;font-weight:750;font-size:11px;line-height:1.5;border-radius:11px;margin-top:12px}
+body[data-theme="dark"] .pressure-error{background:#331e1c;color:#ffac9d;border-color:#6b3932}
+.pressure-meta{margin:15px 0 0;display:flex;justify-content:space-between;gap:7px;align-items:flex-start;flex-direction:column}
+.pressure-meta span{color:var(--sub);font-size:9px;font-weight:750;line-height:1.45}
+.pressure-source-link{margin-top:13px;display:inline-block;font-size:10px;font-weight:900;color:var(--blue)}
+@media(max-width:1180px) and (min-width:701px){.lab-switch button{padding:10px 7px}.traffic-score-wrap{gap:9px}.traffic-score-dial{width:80px;height:80px;flex-basis:80px}}
+@media(max-width:700px){.pressure-peek{gap:7px}.pressure-peek-item{padding:10px 9px}.pressure-peek-item strong{font-size:23px}.lab-switch{margin:13px 0 17px}.lab-switch button{padding:12px 9px}.traffic-score-wrap{padding:14px}.traffic-score-copy strong{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.pressure-peek-item,.lab-switch button,.flow-fill{transition:none}}
