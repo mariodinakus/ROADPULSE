@@ -85,3 +85,12 @@ Real vacant parking spaces require licensed municipality/operator APIs. A scalab
 The default 2D map and 3D globe use MapLibre GL and OpenStreetMap tiles without API keys. If tile loading fails, the app retries with OpenFreeMap. If WebGL is unavailable, a standard OpenStreetMap iframe is shown instead. These public tile services still require an internet connection, allow fair-use only, and may have temporary outages. Live road-traffic overlays still need a licensed provider.
 
 If a previous version persists in a browser, clear site data once. This release unregisters earlier ROADPULSE service workers and removes legacy app shell caches to reduce staleness.
+
+## Security and data rights (v2.2)
+
+- Production TomTom key is loaded only server-side. Never commit or copy it to browser code or public issue reports. Production deployment must be triggered after a key is set.
+- Traffic raster tiles are proxied through a fixed TomTom URL with integer coordinates, a 9–18 zoom range, no arbitrary upstream URL and a 1 MiB response cap. Errors never print secrets. Cache duration is two minutes on the CDN.
+- Configure edge/WAF IP-based rate limiting for `/api/traffic` to protect paid/free third-party quota. No application-level in-memory rate limit is claimed, since serverless instances are distributed.
+- CSP and browser security headers block external script injection, prevent embedding this site in third-party frames, and restrict external map/font access to named providers.
+- `public/legal.html` documents the OpenStreetMap ODbL, OpenFreeMap and TomTom notices and basic privacy limitations. The original UI/code rights are separate from the providers' map data and their licenses.
+- This is a public, anonymous app. Security cannot guarantee immunity from attacks. Activate GitHub/Vercel MFA, restrict collaborator permissions, and monitor TomTom quota.
