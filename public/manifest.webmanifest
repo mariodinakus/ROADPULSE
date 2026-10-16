@@ -1,11 +1,1 @@
-{
-  "name": "ROADPULSE — Traffic & Parking",
-  "short_name": "ROADPULSE",
-  "description": "Traffic and public parking on the map and globe",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "background_color": "#0b1018",
-  "theme_color": "#0b1018",
-  "icons": [{"src":"/assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
-}
+{"name":"ROADPULSE 3 · City Intelligence","short_name":"ROADPULSE","description":"Real-time traffic, road incidents, parking POIs and map","start_url":"/","scope":"/","display":"standalone","background_color":"#f7f8fc","theme_color":"#395beb","icons":[{"src":"/assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
