@@ -20,3 +20,10 @@ Set a **Sensitive Production environment variable** named `TOMTOM_API_KEY`. Neve
 `npm install` then `npm run dev`. To test the serverless endpoints use `vercel dev` with your own local secret. `npm run build` creates `dist/`; the Vercel project uses the Vite framework with output directory `dist`.
 
 All map data © OpenStreetMap contributors (ODbL), traffic © TomTom. THESi and ParkPal are unaffiliated external services; trademarks belong to their owners. No guarantee of parking vacancy or route times.
+
+
+## 3.1 — WebGL-independent map reliability
+
+The default 2D map runs on a self-hosted, dependency-free raster tile renderer (`public/raster.js`) and OpenStreetMap tiles, with Carto fallback. It supports dragging, zoom, live TomTom raster traffic overlay, clickable map coordinates, incident/parking markers, and route polylines. It does not depend on MapLibre, WebGL or a CDN JavaScript library. 3D Globe loads MapLibre lazily on explicit request and reverts to the raster map if unavailable. TomTom's key stays server-side in Vercel and only traffic imagery is served through `/api/traffic`.
+
+**Tile usage:** © OpenStreetMap contributors (ODbL); respect OSM tile usage policy. Traffic © TomTom. The non-WebGL fallback does not represent parking occupancy.
