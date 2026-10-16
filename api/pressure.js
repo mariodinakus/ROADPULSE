@@ -9,7 +9,7 @@ const {protect}=require('../lib/abuse-guard.cjs');
 const cache=new Map();
 const TTL=120000;
 const OFFSETS=[[0,0],[0.0035,0],[-0.0035,0],[0,0.0045],[0,-0.0045]];
-function numeric(v){const n=Number(v);return Number.isFinite(n)?n:null}
+function numeric(v){if(v==null||v==='')return null;const n=Number(v);return Number.isFinite(n)?n:null}
 function clamp(n,min,max){return Math.min(max,Math.max(min,n))}
 function calcSegment(flow,index){
  if(!flow||typeof flow!=='object')return null;
