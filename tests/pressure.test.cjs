@@ -21,6 +21,7 @@ test('closed sampled road is 100, free flowing or faster is 0',()=>{
  assert.equal(calcSegment({currentSpeed:15,freeFlowSpeed:55,roadClosure:true},2).slowdownPercent,100);
  assert.equal(calcSegment({currentSpeed:65,freeFlowSpeed:60},1).slowdownPercent,0);
  assert.equal(calcSegment({currentSpeed:0,freeFlowSpeed:0},1),null);
+ assert.equal(calcSegment({currentSpeed:null,freeFlowSpeed:50},3),null);
 });
 test('summary uses only valid samples and never claims all five if three respond',()=>{
  const snap=summarize([calcSegment({currentSpeed:15,freeFlowSpeed:30},0),null,calcSegment({currentSpeed:30,freeFlowSpeed:60},2),null,calcSegment({currentSpeed:50,freeFlowSpeed:50},4)]);
