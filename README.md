@@ -112,3 +112,9 @@ If a previous version persists in a browser, clear site data once. This release 
 - Traffic first probes the licensed tile endpoint; merely storing an API key does not indicate actual access.
 - Returns provider HTTP status (but never API key) when upstream denies/limits requests.
 - Note: Public Overpass services and TomTom entitlements may still be unavailable independently of the app.
+
+### TomTom compatibility
+
+When the Orbis v2 endpoint returns unauthorized, ROADPULSE tries the documented TomTom classic Raster Flow v4 endpoint **server-side only**. If neither API accepts the key, traffic remains disabled and the user sees a clear authorization message.
+
+If public Overpass instances are unreachable, users can open a provider-hosted parking search rather than a stuck loading state.

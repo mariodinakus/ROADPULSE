@@ -67,7 +67,14 @@
   function getFiltered(){return state.parking.filter(parkingMatches);}
   function renderParkings(){const list=$('parkingList');$('parkingSummary').textContent=state.loading?t('loadingParking'):state.error?t('parkingError'):t('foundParking',getFiltered().length);
     if(state.loading){list.innerHTML='<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';$('showMore').classList.add('hidden');return;}
-    if(state.error){list.innerHTML=`<div class="empty-state">${svg('info')}<strong>${clean(t('parkingError'))}</strong><p>${clean(t('parkingErrorHelp'))}</p></div>`;$('showMore').classList.add('hidden');return;}
+    if(state.error){
+      const lat=state.center.lat,lon=state.center.lon;
+      const dest=`https://www.google.com/maps/search/parking/@${lat},${lon},14z`;
+      const label=state.lang==='el'?'Άνοιγμα πραγματικών πάρκινγκ στους Χάρτες ↗':'Find parking on Google Maps ↗';
+      const explanation=state.lang==='el'?'Η δωρεάν υπηρεσία OpenStreetMap δεν απαντά αυτή τη στιγμή. Ο χάρτης παραμένει διαθέσιμος.':'The public OpenStreetMap parking service is temporarily unreachable. The map remains available.';
+      list.innerHTML=`<div class="empty-state">${svg('info')}<strong>${clean(t('parkingError'))}</strong><p>${clean(explanation)}</p><a class="secondary-btn" href="${clean(dest)}" target="_blank" rel="noopener noreferrer">${clean(label)}</a></div>`;
+      $('showMore').classList.add('hidden');return;
+    }
     const items=getFiltered(),show=items.slice(0,state.showCount);
     if(!items.length){list.innerHTML=`<div class="empty-state">${svg('parking')}<strong>${clean(t('noResults'))}</strong><p>${clean(t('noResultsHelp'))}</p></div>`;$('showMore').classList.add('hidden');return;}
     list.innerHTML=show.map(p=>`<article class="parking-card ${state.selectedId===p.id?'selected':''}" data-id="${clean(p.id)}">

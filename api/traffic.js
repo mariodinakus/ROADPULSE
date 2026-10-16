@@ -15,7 +15,9 @@ module.exports = async function handler(req, res) {
     res.setHeader('Allow', 'GET');
     return res.status(405).end();
   }
-  const key = process.env.TOMTOM_API_KEY;
+  // Vercel values pasted with accidental whitespace/quotes must not silently fail authorization.
+  let key = String(process.env.TOMTOM_API_KEY || '').trim();
+  if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) key = key.slice(1,-1).trim();
   if (!key) return res.status(503).json({ error: 'Traffic is not configured.' });
 
   // Never proxy arbitrary URLs. Only tile coordinates on the allowed zooms.
@@ -50,10 +52,20 @@ module.exports = async function handler(req, res) {
     const upstream = `https://api.tomtom.com/maps/orbis/traffic/flow/raster/tile/${z}/${x}/${y}?apiVersion=2&style=${style}&tileSize=256`;
     concurrentUpstream++;
     const pending = (async () => {
-      const response = await fetch(upstream, {
+      let response = await fetch(upstream, {
         headers: { 'TomTom-Api-Key': key, Accept: 'image/png' },
         signal: AbortSignal.timeout(8500)
       });
+      // A newly-created developer key may be valid for TomTom's classic Traffic
+      // Raster v4 service but not the Orbis v2 API. Fallback is server-to-server:
+      // no key ever enters HTML, a client-visible URL, or an error payload.
+      if ([401,403,404].includes(response.status)) {
+        const legacyStyle = style === 'dark' ? 'relative0-dark' : 'relative0';
+        const legacy = `https://api.tomtom.com/traffic/map/4/tile/flow/${legacyStyle}/${z}/${x}/${y}.png?key=${encodeURIComponent(key)}`;
+        const alternative = await fetch(legacy, {headers:{Accept:'image/png'},signal:AbortSignal.timeout(8500)});
+        if (alternative.ok) response = alternative;
+        else if (alternative.status !== 404) response = alternative;
+      }
       if (!response.ok) {
         const e = new Error('Traffic source unavailable');
         e.status = response.status;
