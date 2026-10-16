@@ -8,7 +8,7 @@ Responsive GR/EN city mobility map for GitHub + Vercel. The new version uses bun
 - **Incidents**: live TomTom Orbis Incident Details within a geographic window; if the plan doesn't allow this service, a transparent error appears, not invented incidents.
 - **Parking**: TomTom Search POI results. These are mapped lots, not actual vacant spaces. Fee data is unknown unless independently verified; filtering cannot magically infer fees.
 - **THESi/ParkPal**: outbound links to https://thesi.gr/ and https://thessaloniki.parkpal.gr/. **No ParkPal internal API integration or scraping.** The posted THESi fare is historical/current as published by the municipality and must be verified on-site.
-- **Road routes**: OSRM public OpenStreetMap demo, estimated travel times **without current traffic**. No API key needed. Provider has usage limits and no production SLA.
+- **Road routes**: TomTom Routing API with live traffic-aware journey time and provider-derived congestion delay where authorized. Transparently falls back to public OSRM (estimated times without live traffic) when TomTom is unavailable. Both services have usage limits; OSRM demo has no production SLA.
 - **Map / globe**: MapLibre GL + OpenStreetMap map tiles; no map API key, subject to publicly hosted tile usage rules and browser WebGL support.
 
 ## Secure Vercel deployment

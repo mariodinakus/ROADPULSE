@@ -1,19 +1,8 @@
-module.exports = async function handler(req,res) {
-  if(req.method!=='GET')return res.status(405).end();
-  const coords=['fromLat','fromLon','toLat','toLon'].map(k=>Number(req.query[k]));
-  if(coords.some(n=>!Number.isFinite(n))||Math.abs(coords[0])>85||Math.abs(coords[2])>85||Math.abs(coords[1])>180||Math.abs(coords[3])>180){return res.status(400).json({error:'Invalid route coordinates'});}
-  const [a,b,c,d]=coords;
-  const p=`${b},${a};${d},${c}`;
-  // Public OSRM is demonstration infrastructure: no live traffic and no production SLA.
-  try {
-    const r=await fetch(`https://routing.openstreetmap.de/routed-car/route/v1/driving/${p}?overview=full&geometries=geojson&steps=false`,{
-      headers:{'User-Agent':'RoadPulse/1.0 (OSRM OpenStreetMap attribution)'},signal:AbortSignal.timeout(12000)
-    });
-    if(!r.ok)throw new Error('Routing unavailable');
-    const data=await r.json();
-    const route=data.routes?.[0];
-    if(!route?.geometry?.coordinates?.length)return res.status(404).json({error:'No drivable route found'});
-    res.setHeader('Cache-Control','public, max-age=0, s-maxage=90');
-    return res.status(200).json({geometry:route.geometry,distanceKm:Math.round(route.distance/100)/10,minutes:Math.max(1,Math.round(route.duration/60)),trafficAware:false,source:'OSRM / OpenStreetMap'});
-  }catch{return res.status(503).json({error:'Routing is temporarily unavailable'});}
-};
+'use strict';
+const {protect}=require('../lib/abuse-guard.cjs');
+const cache=new Map();
+function getKey(){let k=String(process.env.TOMTOM_API_KEY||'').trim();if((k.startsWith('"')&&k.endsWith('"'))||(k.startsWith("'")&&k.endsWith("'")))k=k.slice(1,-1).trim();return k;}
+function parseRouteQuery(q){const xy=['fromLat','fromLon','toLat','toLon'].map(k=>{const value=q[k];return (typeof value==='string'&&value.trim()!=='')?Number(value):NaN});if(xy.some(n=>!Number.isFinite(n))||Math.abs(xy[0])>85||Math.abs(xy[2])>85||Math.abs(xy[1])>180||Math.abs(xy[3])>180)return null;return xy;}
+async function tomtom(a,b,c,d,key){const params=new URLSearchParams({key,traffic:'true',routeType:'fastest',travelMode:'car',computeTravelTimeFor:'all',instructionsType:'none'});const url=`https://api.tomtom.com/routing/1/calculateRoute/${a},${b}:${c},${d}/json?${params}`;const r=await fetch(url,{signal:AbortSignal.timeout(9000),headers:{Accept:'application/json'}});if(!r.ok)throw Error(`TomTom route status ${r.status}`);const json=await r.json();const route=json.routes?.[0],sum=route?.summary,points=route?.legs?.flatMap(leg=>leg.points||[]).map(pt=>[Number(pt.longitude),Number(pt.latitude)]).filter(pt=>pt.every(Number.isFinite));if(!sum||!points||points.length<2||points.length>25000)throw Error('Route geometry not available');return {geometry:{type:'LineString',coordinates:points},distanceKm:Math.round(sum.lengthInMeters/100)/10,minutes:Math.max(1,Math.round(sum.travelTimeInSeconds/60)),trafficDelayMinutes:Number.isFinite(sum.trafficDelayInSeconds)?Math.round(sum.trafficDelayInSeconds/60):null,noTrafficMinutes:Number.isFinite(sum.noTrafficTravelTimeInSeconds)?Math.round(sum.noTrafficTravelTimeInSeconds/60):null,trafficAware:true,source:'TomTom Routing · live traffic'};}
+async function osm(a,b,c,d){const p=`${b},${a};${d},${c}`;const r=await fetch(`https://routing.openstreetmap.de/routed-car/route/v1/driving/${p}?overview=full&geometries=geojson&steps=false`,{headers:{'User-Agent':'ROADPULSE 3.0 / OpenStreetMap routing'},signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('OSRM unavailable');const data=await r.json();const route=data.routes?.[0];if(!route?.geometry?.coordinates?.length)throw Error('OSRM returned no route');return {geometry:route.geometry,distanceKm:Math.round(route.distance/100)/10,minutes:Math.max(1,Math.round(route.duration/60)),trafficAware:false,trafficDelayMinutes:null,noTrafficMinutes:null,source:'OSRM / OpenStreetMap — no live traffic'};}
+module.exports=async function handler(req,res){res.setHeader('X-Content-Type-Options','nosniff');if(req.method!=='GET')return res.status(405).json({error:'Method not allowed'});const xy=parseRouteQuery(req.query||{});if(!xy)return res.status(400).json({error:'Invalid coordinates'});const limiter=protect(req,res,{name:'route',perMinute:12,perDay:160,totalPerMinute:100});if(!limiter.ok)return limiter.response;const [a,b,c,d]=xy;const k=xy.map(x=>x.toFixed(4)).join(',');const hit=cache.get(k);if(hit&&Date.now()-hit.time<45000)return res.status(200).json(hit.data);try{let data=null;const key=getKey();if(key)try{data=await tomtom(a,b,c,d,key)}catch{/* Fall back to OSRM; never imply traffic was included. */}if(!data)data=await osm(a,b,c,d);if(cache.size>90)cache.delete(cache.keys().next().value);cache.set(k,{time:Date.now(),data});res.setHeader('Cache-Control','private,max-age=0');return res.status(200).json(data);}catch{return res.status(503).json({error:'Route provider currently unavailable'});}};
