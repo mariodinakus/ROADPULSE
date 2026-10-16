@@ -76,10 +76,18 @@ module.exports = async function handler(req, res) {
     return sendTile(res, await inflight.get(cacheKey));
   } catch (error) {
     res.setHeader('Cache-Control', 'no-store');
+    if (error.status === 401 || error.status === 403) {
+      res.setHeader('X-ROADPULSE-PROVIDER-STATUS', String(error.status));
+      return res.status(502).json({ error: 'TomTom Traffic API key is not authorized for these tiles', providerStatus: error.status });
+    }
+    if (error.status === 404) {
+      return res.status(502).json({ error: 'TomTom traffic tile endpoint not found', providerStatus: 404 });
+    }
     if (error.status === 429) {
       res.setHeader('Retry-After', '60');
-      return res.status(429).json({ error: 'Provider traffic quota temporarily exceeded' });
+      return res.status(429).json({ error: 'Provider traffic quota temporarily exceeded', providerStatus: 429 });
     }
+    if (error.status) return res.status(502).json({error:'TomTom traffic provider error',providerStatus:error.status});
     return res.status(502).json({ error: 'Traffic imagery unavailable right now' });
   }
 };

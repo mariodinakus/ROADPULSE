@@ -103,3 +103,12 @@ If a previous version persists in a browser, clear site data once. This release 
 - Basic cross-origin hotlink checks apply, without claiming to block non-browser clients. Anonymous IP hashes, using an ephemeral per-instance salt, exist only in memory and expire with the runtime.
 - **Security limitation:** Warm-function memory is not shared between Vercel instances; this is *best-effort* abuse protection, **not globally enforceable rate limiting** or a hard spending cap. For an enforceable per-user/per-account limit, activate Vercel WAF / an external shared Redis rate limiter, and configure TomTom account quota alerts or limits as available. Vercel Firewall API currently returns `404 Seawall Config not found` in this account.
 - See `/legal.html` for data attribution and copyright. Never commit TomTom keys. Production secret is `TOMTOM_API_KEY`, stored as a Sensitive Environment Variable on Vercel.
+
+
+## 2026-10-16 maintenance fix
+
+- Removed repeated MapLibre source mutations in `idle` events (previously caused endless rerendering).
+- Overpass parking queries use GET instead of POST: public mirrors observed to reject POST and accept GET.
+- Traffic first probes the licensed tile endpoint; merely storing an API key does not indicate actual access.
+- Returns provider HTTP status (but never API key) when upstream denies/limits requests.
+- Note: Public Overpass services and TomTom entitlements may still be unavailable independently of the app.

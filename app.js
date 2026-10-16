@@ -18,7 +18,7 @@
     en:{brandSub:'The world in motion',dashboard:'DASHBOARD',yourArea:'YOUR AREA',parkingPlaces:'PARKING PLACES',refresh:'Refresh',all:'All',free:'Free',paid:'Paid',covered:'Covered',searchThisArea:'Search this area',zoomFirst:'Zoom into a city first.',searchRadius:'Search radius',showMore:'Show more',planRoute:'ROUTE PLANNER',routeHint:'Set a start point using your location or a map click, then choose a destination.',start:'START POINT',destination:'DESTINATION',useLocation:'Use my location',calculateRoute:'Calculate route',routeNote:'OSRM travel times are estimates, without live traffic.',worldView:'EXPLORE THE WORLD',worldTitle:'One planet. One map.',worldDesc:'Spin the globe, pick a city and zoom all the way down to the street.',enterGlobe:'Open the globe',quickCities:'QUICK LOCATIONS',footerSource:'OSM / Overpass · Vacancies: not live',traffic:'Traffic flow',trafficChecking:'Checking connection…',trafficNeedsKey:'Real-time traffic requires a TomTom API key in Vercel.',openLiveTraffic:'See live traffic on Maps',lightTraffic:'Clear',mediumTraffic:'Slow',heavyTraffic:'Congested',parkingNav:'Parking',routesNav:'Routes',exploreNav:'Globe',myLocationNav:'My position',mapTag:'Your city, in motion.',titleParking:'Find your spot',descParking:'Discover parking, routes and traffic in one beautiful map.',titleRoute:'Get moving',descRoute:'Plan a route from your location or a map point.',titleExplore:'See the world',descExplore:'Explore the planet on a real interactive 3D globe.',center:'Map center',selectMap:'Pick on map',position:'My location',loadingParking:'Finding mapped parking places…',foundParking:n=>`${n} mapped parking places`,noResults:'No parking matches your filters',noResultsHelp:'Try another filter or a wider radius. Coverage depends on OpenStreetMap.',parkingError:'Could not load parking data',parkingErrorHelp:'The external provider is not responding. Tap Refresh.',capacity:'Mapped capacity',occupancy:'Vacancies',unknown:'Unknown',freeTag:'Free',paidTag:'Paid',unknownFee:'Fee unknown',coveredTag:'Covered',streetSide:'Street-side',surface:'Surface / other',details:'Details',navigate:'Navigate',routeTo:'Route',save:'Save',saved:'Saved to favorites',removeSaved:'Removed from favorites',liveUnknown:'Live parking vacancies are not provided by OpenStreetMap.',routeCompleted:'ROUTE FOUND',min:'min',km:'km',routeFail:'Could not calculate route',chooseDest:'Select a destination on the map or choose a parking location first.',selectOrigin:'Click map to choose START',selectDestination:'Click map to choose DESTINATION',cancel:'Cancel',trafficReady:'Live TomTom traffic available',trafficOff:'Offline · API key required',trafficOn:'TomTom live flow',trafficOffToggle:'Live layer turned off',trafficFailed:'Traffic layer currently unavailable.',permissionDenied:'Location access was denied.',locationFailed:'Your location could not be determined.',locating:'Getting your position…',positionFound:'Your location is ready.',searchHint:'Enter at least 3 characters.',searchFail:'Search failed. Please try again.',searchEmpty:'No results found.',searchPlaceholder:'Search for a city, neighborhood, street...',clickParking:'Choose parking from the map or list.',roadsDontMeanSpaces:'Capacity is the mapped total, not available spaces.',routePreview:'Travel time excludes current congestion.',clockLocal:'Local time',parkingAvailable:'Parking is mapped from OSM',mapUnavailable:'The map failed to load — check connectivity.',noTrafficInfo:'Opens a separate live traffic map.',originSet:'Start point set.',destinationSet:'Destination set.'}
   };
   const getStorage=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
-  const state={lang:getStorage('rp-lang','el'),theme:getStorage('rp-theme-v2','light'),tab:'parking',globe:false,city:'thess',center:{lat:cities.thess.lat,lon:cities.thess.lon},parking:[],loading:false,error:null,filter:'all',radius:2500,showCount:7,selectedId:null,favorites:new Set(getStorage('rp-favorites',[])),markers:[],myLocation:null,origin:null,destination:null,pick:null,route:null,trafficEnabled:false,trafficOn:false,trafficRefresh:0,searchItems:[]};
+  const state={lang:getStorage('rp-lang','el'),theme:getStorage('rp-theme-v2','light'),tab:'parking',globe:false,city:'thess',center:{lat:cities.thess.lat,lon:cities.thess.lon},parking:[],loading:false,error:null,filter:'all',radius:2500,showCount:7,selectedId:null,favorites:new Set(getStorage('rp-favorites',[])),markers:[],myLocation:null,origin:null,destination:null,pick:null,route:null,trafficEnabled:false,trafficOn:false,trafficError:null,trafficRefresh:0,searchItems:[]};
   let map=null, startMarker=null, destMarker=null, userMarker=null, parkingRequest=0, trafficInterval=null;
   const t=(key,...args)=>{const value=words[state.lang]?.[key]??words.el[key]??key;return typeof value==='function'?value(...args):value;};
   const coord=(x)=>Number(x).toFixed(3);
@@ -54,7 +54,7 @@
     catch(error){console.warn('Map style fallback:',error);setIframeFallback();}
     clearTimeout(mapWatchdog);mapWatchdog=window.setTimeout(()=>{if(!mapGoodTiles)setIframeFallback();},9500);
   }
-  function setTheme(next){state.theme=next;document.body.dataset.theme=next;localStorage.setItem('rp-theme-v2',JSON.stringify(next));$('themeBtn').innerHTML=svg(next==='dark'?'sun':'moon');}
+  function setTheme(next){state.theme=next;document.body.dataset.theme=next;localStorage.setItem('rp-theme-v2',JSON.stringify(next));$('themeBtn').innerHTML=svg(next==='dark'?'sun':'moon');redrawTraffic();}
 
   function updatePanelHeading(){const names={parking:'Parking',route:'Route',explore:'Explore'};const titles={parking:'titleParking',route:'titleRoute',explore:'titleExplore'},descs={parking:'descParking',route:'descRoute',explore:'descExplore'};$('panelTitle').innerHTML=clean(t(titles[state.tab]))+'<span>.</span>';$('panelDesc').textContent=t(descs[state.tab]);}
   function updateCityLabel(){const city=cities[state.city];const name=city?city[state.lang]:state.lang==='el'?'Περιοχή χάρτη':'Map location';$('cityName').textContent=name;$('citySub').textContent=city?({GR:state.lang==='el'?'Ελλάδα':'Greece',UK:'United Kingdom',US:'United States',JP:'Japan'}[city.country]||city.country):`${coord(state.center.lat)}, ${coord(state.center.lon)}`;$('mapPlace').textContent=city?`${city.en.toUpperCase()}, ${city.country}`:`${coord(state.center.lat)}°, ${coord(state.center.lon)}°`;$('coordLabel').textContent=`${coord(state.center.lat)}° N, ${coord(state.center.lon)}° E`;$('mapTagline').textContent=t('mapTag');document.querySelectorAll('[data-city]').forEach(btn=>btn.classList.toggle('selected',btn.dataset.city===state.city));const c=state.center;$('googleTrafficLink').href=`https://www.google.com/maps/@${c.lat},${c.lon},13z/data=!5m1!1e1`;}
@@ -101,13 +101,81 @@
     try{const params=new URLSearchParams({q:value,lang:state.lang,lat:String(state.center.lat),lon:String(state.center.lon)});const r=await fetch(`/api/search?${params}`);const json=await r.json();if(!r.ok)throw new Error(json.error);state.searchItems=json.items||[];node.innerHTML=state.searchItems.length?state.searchItems.map((item,i)=>`<button class="search-result" data-result="${i}">${svg('pin')}<span>${clean(item.name||item.detail)}</span></button>`).join(''):`<div class="search-msg">${clean(t('searchEmpty'))}</div>`;}
     catch{node.innerHTML=`<div class="search-msg">${clean(t('searchFail'))}</div>`;}}
   function chooseSearch(index){const item=state.searchItems[index];if(!item)return;state.center={lat:item.lat,lon:item.lon};state.city=null;state.selectedId=null;state.route=null;state.destination=null;$('searchInput').value=item.name;state.searchItems=[];$('searchResults').classList.add('hidden');setGlobe(false);map?.flyTo({center:[item.lon,item.lat],zoom:13.7,duration:1350});updateCityLabel();updateIframePosition();updateRouteFieldLabels();loadParking();}
-  function updateTrafficUI(){$('trafficToggle').disabled=!state.trafficEnabled;$('trafficToggle').checked=state.trafficEnabled&&state.trafficOn;$('trafficStatus').textContent=state.trafficEnabled?(state.trafficOn?t('trafficOn'):t('trafficReady')):t('trafficOff');$('trafficNoKey').classList.toggle('hidden',state.trafficEnabled);$('trafficLegend').classList.toggle('hidden',!state.trafficEnabled||!state.trafficOn);$('dataCaption').textContent=state.trafficEnabled&&state.trafficOn?'© OpenStreetMap contributors · Traffic © TomTom':'© OpenStreetMap contributors';}
-  function redrawTraffic(){if(!map||!map.isStyleLoaded())return;if(map.getLayer('live-traffic'))map.removeLayer('live-traffic');if(map.getSource('live-traffic'))map.removeSource('live-traffic');if(!state.trafficEnabled||!state.trafficOn)return;
-    map.addSource('live-traffic',{type:'raster',tiles:[`/api/traffic?z={z}&x={x}&y={y}&theme=${state.theme==='dark'?'dark':'light'}`],tileSize:256,minzoom:9,maxzoom:18});map.addLayer({id:'live-traffic',type:'raster',source:'live-traffic',paint:{'raster-opacity':0.88,'raster-fade-duration':0}});
+  function updateTrafficUI(){
+    $('trafficToggle').disabled=!state.trafficEnabled;
+    $('trafficToggle').checked=state.trafficEnabled&&state.trafficOn;
+    $('trafficStatus').textContent=state.trafficError||(state.trafficEnabled?(state.trafficOn?t('trafficOn'):t('trafficReady')):t('trafficOff'));
+    const missing=$('trafficNoKey');
+    missing.classList.toggle('hidden',state.trafficEnabled);
+    if(!state.trafficEnabled&&state.trafficError){
+      missing.querySelector('[data-i18n="trafficNeedsKey"]').textContent=state.trafficError;
+    }
+    $('trafficLegend').classList.toggle('hidden',!state.trafficEnabled||!state.trafficOn);
+    $('dataCaption').textContent=state.trafficEnabled&&state.trafficOn?'© OpenStreetMap contributors · Traffic © TomTom':'© OpenStreetMap contributors';
   }
-  function toggleTraffic(on){if(!state.trafficEnabled)return;state.trafficOn=on;state.trafficRefresh=Math.floor(Date.now()/120000);redrawTraffic();updateTrafficUI();}
-  async function loadConfig(){try{const r=await fetch('/api/config');const d=await r.json();state.trafficEnabled=!!d.trafficEnabled;state.trafficOn=state.trafficEnabled;state.trafficRefresh=Math.floor(Date.now()/120000);updateTrafficUI();redrawTraffic();}catch{state.trafficEnabled=false;state.trafficOn=false;updateTrafficUI();}}
-  function mapOverlay(){if(!map||!map.isStyleLoaded())return;if(!map.getSource('route-geo')){map.addSource('route-geo',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'route-casing',type:'line',source:'route-geo',paint:{'line-color':'#0c1720','line-width':10,'line-opacity':.8}});map.addLayer({id:'route-line',type:'line',source:'route-geo',paint:{'line-color':'#b6ef65','line-width':6,'line-opacity':.95}});}drawRoute();redrawTraffic();}
+  let renderedTrafficSignature='';
+  function redrawTraffic(){
+    if(!map||!map.isStyleLoaded())return;
+    const active=state.trafficEnabled&&state.trafficOn;
+    const signature=active?`${state.theme}:${state.trafficRefresh}`:'off';
+    const existing=!!map.getLayer('live-traffic');
+    // Never repeatedly destroy and recreate the source on every map idle event.
+    if(renderedTrafficSignature===signature && existing===active)return;
+    if(existing)map.removeLayer('live-traffic');
+    if(map.getSource('live-traffic'))map.removeSource('live-traffic');
+    if(active){
+      const theme=state.theme==='dark'?'dark':'light';
+      map.addSource('live-traffic',{type:'raster',tiles:[`/api/traffic?z={z}&x={x}&y={y}&theme=${theme}&v=${state.trafficRefresh}`],tileSize:256,minzoom:9,maxzoom:18});
+      map.addLayer({id:'live-traffic',type:'raster',source:'live-traffic',paint:{'raster-opacity':0.88,'raster-fade-duration':0}});
+    }
+    renderedTrafficSignature=signature;
+  }
+  function toggleTraffic(on){
+    if(!state.trafficEnabled)return;
+    state.trafficOn=on;
+    state.trafficRefresh=Math.floor(Date.now()/120000);
+    redrawTraffic();updateTrafficUI();
+  }
+  async function loadConfig(){
+    try{
+      const r=await fetch('/api/config',{cache:'no-store'});
+      if(!r.ok)throw new Error('Config unavailable');
+      const d=await r.json();
+      state.trafficEnabled=false;state.trafficOn=false;state.trafficError=null;
+      updateTrafficUI();
+      if(!d.trafficEnabled)return;
+      // Real image probe: a stored key alone does not imply entitlement to TomTom Orbis tiles.
+      const probe=await fetch('/api/traffic?z=12&x=2309&y=1541&theme=light',{cache:'default'});
+      if(!probe.ok){
+        const result=await probe.json().catch(()=>({}));
+        const status=result.providerStatus||probe.status;
+        if(status===401||status===403){state.trafficError=state.lang==='el'?'Το κλειδί TomTom δεν έχει πρόσβαση στο Traffic API. Έλεγξε τα δικαιώματά του.':'TomTom API key is not authorized for Traffic. Check key permissions.';}
+        else if(status===429){state.trafficError=state.lang==='el'?'Η TomTom έχει περιορίσει προσωρινά τα αιτήματα.':'TomTom traffic quota was reached.';}
+        else {state.trafficError=state.lang==='el'?`Η TomTom δεν ανταποκρίνεται (HTTP ${status}).`:`TomTom is currently unavailable (HTTP ${status}).`;}
+        updateTrafficUI();return;
+      }
+      const ct=probe.headers.get('content-type')||'';
+      if(!ct.startsWith('image/'))throw new Error('Invalid TomTom tile');
+      // Only enable the raster layer after an actual valid tile has been received.
+      state.trafficEnabled=true;state.trafficOn=true;
+      state.trafficRefresh=Math.floor(Date.now()/120000);
+      updateTrafficUI();redrawTraffic();
+    }catch(error){
+      state.trafficEnabled=false;state.trafficOn=false;
+      state.trafficError=state.lang==='el'?'Δεν ολοκληρώθηκε ο έλεγχος σύνδεσης TomTom.':'Could not verify TomTom traffic connection.';
+      updateTrafficUI();
+    }
+  }
+  function mapOverlay(){
+    if(!map||!map.isStyleLoaded())return;
+    if(!map.getSource('route-geo')){
+      map.addSource('route-geo',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+      map.addLayer({id:'route-casing',type:'line',source:'route-geo',paint:{'line-color':'#0c1720','line-width':10,'line-opacity':.8}});
+      map.addLayer({id:'route-line',type:'line',source:'route-geo',paint:{'line-color':'#b6ef65','line-width':6,'line-opacity':.95}});
+      drawRoute();
+    }
+    redrawTraffic();
+  }
   function initMap(){
     const host=$('map');
     if(typeof maplibregl==='undefined'){
@@ -133,7 +201,7 @@
         mapGoodTiles++;clearTimeout(mapWatchdog);
       }
     });
-    map.on('idle',()=>{if(map&&map.areTilesLoaded()){mapGoodTiles++;clearTimeout(mapWatchdog);mapOverlay();}});
+    map.on('idle',()=>{if(map&&map.areTilesLoaded()){mapGoodTiles++;clearTimeout(mapWatchdog);}});
     map.on('zoomend',()=>{$('mapZoomLabel').textContent=`ZOOM ${map.getZoom().toFixed(1)}`;});
     map.on('click',event=>{if(!state.pick)return;const ll={lat:event.lngLat.lat,lon:event.lngLat.lng};if(state.pick==='start'){state.origin={...ll,label:`${coord(ll.lat)}, ${coord(ll.lon)}`};toast(t('originSet'));}else{state.destination={...ll,label:`${coord(ll.lat)}, ${coord(ll.lon)}`};toast(t('destinationSet'));}state.route=null;drawRoute();renderRouteResult();updateRouteFieldLabels();clearPick();switchTab('route');});
     map.on('error',e=>{
@@ -163,7 +231,7 @@
     document.addEventListener('click',e=>{if(!e.target.closest('.header-search'))$('searchResults').classList.add('hidden');});
     $('setStartMode').addEventListener('click',()=>setPick('start'));$('setDestMode').addEventListener('click',()=>setPick('destination'));$('cancelPick').addEventListener('click',clearPick);$('makeRoute').addEventListener('click',calculateRoute);$('trafficToggle').addEventListener('change',e=>toggleTraffic(e.target.checked));
     window.addEventListener('keydown',e=>{if(e.key==='Escape'){clearPick();$('searchResults').classList.add('hidden');}});
-    trafficInterval=window.setInterval(()=>{if(state.trafficEnabled&&state.trafficOn){state.trafficRefresh=Math.floor(Date.now()/120000);redrawTraffic();}},120_000);
+    trafficInterval=window.setInterval(()=>{if(state.trafficEnabled&&state.trafficOn){const next=Math.floor(Date.now()/120000);if(next!==state.trafficRefresh){state.trafficRefresh=next;redrawTraffic();}}},120_000);
   }
   function start(){document.body.dataset.theme=state.theme;setLang(state.lang);bind();initMap();loadConfig();loadParking();updateClock();window.setInterval(updateClock,30_000);if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(regs=>Promise.all(regs.filter(r=>r.scope.startsWith(location.origin)).map(r=>r.unregister()))).catch(()=>{});if('caches' in window)caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('roadpulse-shell-')).map(k=>caches.delete(k)))).catch(()=>{});}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();

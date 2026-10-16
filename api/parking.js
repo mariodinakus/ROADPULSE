@@ -1,7 +1,6 @@
 const instances = [
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
-  'https://overpass.nchc.org.tw/api/interpreter',
   'https://overpass-api.de/api/interpreter'
 ];
 
@@ -18,12 +17,13 @@ module.exports = async function handler(req,res) {
   if (!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>85||Math.abs(lon)>180) {
     return res.status(400).json({error:'Invalid coordinates'});
   }
-  const q=`[out:json][timeout:17];(nwr(around:${Math.round(radius)},${lat},${lon})["amenity"="parking"];nwr(around:${Math.round(radius)},${lat},${lon})["parking"="street_side"];);out center 260;`;
+  const q=`[out:json][timeout:16];(nwr(around:${Math.round(radius)},${lat},${lon})["amenity"="parking"];nwr(around:${Math.round(radius)},${lat},${lon})["parking"="street_side"];);out center 260;`;
   async function fetchFrom(instance){
-    const r=await fetch(instance,{
-        method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded','User-Agent':'RoadPulse/1.0 (OpenStreetMap community map; https://github.com)'},
-        body:new URLSearchParams({data:q}).toString(),
-        signal:AbortSignal.timeout(12000)
+    // Several public Overpass mirrors reject POST while the same query works via GET.
+    const endpoint=instance+'?'+new URLSearchParams({data:q}).toString();
+    const r=await fetch(endpoint,{
+        method:'GET', headers:{Accept:'application/json','User-Agent':'ROADPULSE/2.3 (OSM attribution; https://github.com/mariodinakus/ROADPULSE)'},
+        signal:AbortSignal.timeout(14500)
       });
       if(!r.ok) throw Error('OSM HTTP '+r.status);
       const data=await r.json();
@@ -58,7 +58,7 @@ module.exports = async function handler(req,res) {
   // Two providers in parallel avoids long serial timeouts in serverless functions.
   try {
     const payload=await Promise.any(instances.map(async (instance,index)=>{
-      if(index>1)await new Promise(resolve=>setTimeout(resolve,1800));
+      if(index>0)await new Promise(resolve=>setTimeout(resolve,1400));
       return fetchFrom(instance);
     }));
     res.setHeader('Cache-Control','public, max-age=0, s-maxage=240, stale-while-revalidate=600');
