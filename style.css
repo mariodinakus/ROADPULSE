@@ -20,3 +20,63 @@ body[data-theme=dark]{--bg:#0c1223;--white:#121c31;--ink:#f3f5ff;--navy:#f2f4ff;
 .rp-raster-pin.parking{background:#4866ee}
 .rp-raster-pin:hover{z-index:2;filter:brightness(.92);scale:1.1}
 #mapFallback iframe{display:block;width:100%;height:100%;border:0}
+
+/* ROADPULSE premium scrollbars + globe polish · October 2026 */
+:root{
+ --rp-scroll-thumb:#a5b8de;
+ --rp-scroll-thumb-hover:#6e89ed;
+ --rp-scroll-track:rgba(103,132,186,.09);
+}
+body[data-theme=dark]{
+ --rp-scroll-thumb:#4b628e;
+ --rp-scroll-thumb-hover:#91a6ff;
+ --rp-scroll-track:rgba(135,157,202,.10);
+}
+.sidebar-scroll,.right-rail,.search-results,.city-chip-row,.filters{
+ scrollbar-width:thin;
+ scrollbar-color:var(--rp-scroll-thumb) var(--rp-scroll-track);
+ scroll-behavior:smooth;
+}
+.sidebar-scroll,.right-rail{scrollbar-gutter:stable}
+.sidebar-scroll::-webkit-scrollbar,.right-rail::-webkit-scrollbar,.search-results::-webkit-scrollbar{
+ width:10px;
+}
+.city-chip-row::-webkit-scrollbar,.filters::-webkit-scrollbar{height:7px}
+.sidebar-scroll::-webkit-scrollbar-track,.right-rail::-webkit-scrollbar-track,.search-results::-webkit-scrollbar-track,
+.city-chip-row::-webkit-scrollbar-track,.filters::-webkit-scrollbar-track{
+ background:var(--rp-scroll-track);border-radius:20px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb,.right-rail::-webkit-scrollbar-thumb,.search-results::-webkit-scrollbar-thumb,
+.city-chip-row::-webkit-scrollbar-thumb,.filters::-webkit-scrollbar-thumb{
+ background:linear-gradient(160deg,var(--rp-scroll-thumb),var(--rp-scroll-thumb-hover));
+ border:2px solid transparent;background-clip:padding-box;border-radius:999px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover,.right-rail::-webkit-scrollbar-thumb:hover,.search-results::-webkit-scrollbar-thumb:hover,
+.city-chip-row::-webkit-scrollbar-thumb:hover,.filters::-webkit-scrollbar-thumb:hover{
+ background:var(--rp-scroll-thumb-hover);background-clip:padding-box;
+}
+#map.rp-globe-mode{
+ background:radial-gradient(ellipse at 49% 43%,#183c68 0%,#061b35 42%,#030b1d 78%,#020714 100%);
+}
+#map.rp-globe-mode~.map-title h2{color:#f8fbff;text-shadow:0 3px 20px #0009}
+#map.rp-globe-mode~.map-title .map-kicker,
+#map.rp-globe-mode~.map-title #mapStamp{color:#c1d8ff;text-shadow:0 2px 9px #0009}
+#map.rp-globe-mode~.map-switch{
+ background:rgba(10,24,49,.84);border:1px solid rgba(181,209,255,.20);
+ box-shadow:0 10px 32px #0005;backdrop-filter:blur(16px)
+}
+#map.rp-globe-mode~.map-switch button{color:#c4d8f6}
+#map.rp-globe-mode~.map-switch button.active{color:#fff;background:#4d72f6}
+#map.rp-globe-mode~.map-bottom .map-credit,
+#map.rp-globe-mode~.map-bottom .zoom-readout,
+#map.rp-globe-mode~.map-quick-status{
+ background:rgba(8,24,50,.84);border-color:rgba(180,205,249,.22);
+ color:#eaf2ff;backdrop-filter:blur(14px)
+}
+@media(max-width:700px){
+ .sidebar-scroll,.right-rail{scrollbar-gutter:auto}
+ .sidebar-scroll::-webkit-scrollbar,.right-rail::-webkit-scrollbar{width:5px}
+}
+@media(prefers-reduced-motion:reduce){
+ .sidebar-scroll,.right-rail,.search-results,.city-chip-row,.filters{scroll-behavior:auto}
+}
