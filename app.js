@@ -5,17 +5,19 @@ const cities={thess:{lat:40.634,lon:22.944,el:'Θεσσαλονίκη',en:'Thess
 const store=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};const st={lang:store('rp3-lang','el'),theme:store('rp3-theme','light'),view:'traffic',city:'thess',center:{lat:cities.thess.lat,lon:cities.thess.lon},trafficEnabled:false,trafficOn:true,trafficStamp:Math.floor(Date.now()/120000),incidents:[],incidentReady:false,incidentError:null,incidentFilter:'all',parking:[],parkingReady:false,parkingError:null,parkingFilter:'all',markers:[],route:null,origin:null,destination:null,selecting:null,globe:false,mapReady:false,trafficLoading:true};let map=null,raster=null,routeStartMarker=null,routeEndMarker=null,clockTimer=null,toastTimer=null,incidentReq=0,parkingReq=0,trafficSeq=0,watchdog=null,provider='osm',trafficSignature='';
 const tr=k=>langWords[st.lang]?.[k]??langWords.el[k]??k;const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const fmt=(n,d=0)=>Number(n).toLocaleString(st.lang==='el'?'el-GR':'en-GB',{maximumFractionDigits:d});const coords=n=>Number(n).toFixed(4);const toast=s=>{const el=$('toast');el.textContent=s;el.classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.add('hidden'),3800)};
 const styleOSM={version:8,name:'OpenStreetMap · keyless',sources:{base:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'basemap',type:'raster',source:'base'}]};const backup='https://tiles.openfreemap.org/styles/liberty';
+// MapLibre v6 globe: true spherical projection, with an atmosphere, no paid map key.
+const styleGlobe={version:8,name:'ROADPULSE EARTH',projection:{type:'globe'},sources:{base:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'earth',type:'raster',source:'base',paint:{'raster-fade-duration':160}}],sky:{'atmosphere-blend':['interpolate',['linear'],['zoom'],0,1,5,1,7,0]},light:{anchor:'map',position:[1.5,90,80]}};let globeRequestId=0;
 function setLang(l){st.lang=l;localStorage.setItem('rp3-lang',JSON.stringify(l));document.documentElement.lang=l;qa('[data-t]').forEach(el=>{el.textContent=tr(el.dataset.t)});$('langBtn').textContent=l==='el'?'EN':'ΕΛ';$('searchInput').placeholder=tr('searchPlaceholder');qa('[data-city]').forEach(b=>{b.textContent=cities[b.dataset.city][l]});cityLabel();renderIncidents();renderParking();updateTrafficStatus();renderRouteLabels();}
-function setTheme(v){st.theme=v;document.body.dataset.theme=v;localStorage.setItem('rp3-theme',JSON.stringify(v));$('themeBtn').textContent=v==='dark'?'☀':'☾';if(raster)updateTrafficLayer();if(map){trafficSignature='';map.setStyle(provider==='osm'?styleOSM:backup)}}
+function setTheme(v){st.theme=v;document.body.dataset.theme=v;localStorage.setItem('rp3-theme',JSON.stringify(v));$('themeBtn').textContent=v==='dark'?'☀':'☾';if(raster)updateTrafficLayer();if(map){trafficSignature='';map.setStyle(st.globe?styleGlobe:styleOSM)}}
 function activeView(v){st.view=v;qa('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));qa('[data-pane]').forEach(p=>p.classList.toggle('active',p.dataset.pane===v));if(v==='globe')switchGlobe(true);if(v==='incidents'){renderIncidents();}if(v==='parking'){renderParking();}refreshPins();}
 function cityLabel(){const c=cities[st.city];$('cityTitle').innerHTML=esc(c?c[st.lang]:(st.lang==='el'?'Περιοχή':'Map area'))+'<span class="orange-dot">.</span>';$('citySub').textContent=c?c.region:`${coords(st.center.lat)}, ${coords(st.center.lon)}`;qa('[data-city]').forEach(b=>b.classList.toggle('active',b.dataset.city===st.city));}
-function selectCity(name){const c=cities[name];if(!c)return;st.city=name;st.center={lat:c.lat,lon:c.lon};cityLabel();if(map)map.flyTo({center:[c.lon,c.lat],zoom:c.zoom,pitch:0,duration:1000});else updateFallback();st.route=null;updateRouteMap();updateMetrics();requestData();}
+function selectCity(name){const c=cities[name];if(!c)return;st.city=name;st.center={lat:c.lat,lon:c.lon};cityLabel();if(map)map.flyTo({center:[c.lon,c.lat],zoom:st.globe?Math.min(4.5,c.zoom):c.zoom,pitch:0,duration:1000});else updateFallback();st.route=null;updateRouteMap();updateMetrics();requestData();}
 function mapStatus(s){$('mapStatusText').textContent=s;}
 function initMap(){initRaster();}
 function initRaster(){
   clearTimeout(watchdog);if(map){try{map.remove()}catch{}map=null;}
   if(raster){try{raster.destroy()}catch{}raster=null;}
-  st.globe=false;st.mapReady=true;
+  st.globe=false;st.mapReady=true;$('map').classList.remove('rp-globe-mode');
   $('view2d').classList.add('active');$('view3d').classList.remove('active');
   const center=st.center;
   if(window.RoadPulseRasterMap){
@@ -34,20 +36,24 @@ function initRaster(){
 }
 function fallbackMap(){initRaster();}
 function updateFallback(){if(raster){const c=st.center;raster.setView(c.lat,c.lon,cities[st.city]?.zoom||12.5)}else if(!map)initRaster();}
-async function initMapLibre(){
-  if(!window.maplibregl&&window.RoadPulseLoadGlobe){try{await window.RoadPulseLoadGlobe()}catch(error){console.warn('Globe module:',error)}}
-  if(!window.maplibregl?.supported?.()){toast(st.lang==='el'?'Ο 3D χάρτης χρειάζεται WebGL. Η κανονική προβολή 2D λειτουργεί.':'3D requires WebGL. 2D remains available.');return false;}
-  if(raster){raster.destroy();raster=null;}if(map){try{map.remove()}catch{}}
-  st.mapReady=false;trafficSignature='';
-  try{map=new window.maplibregl.Map({container:'map',style:styleOSM,center:[st.center.lon,st.center.lat],zoom:2.2,maxZoom:19,minZoom:1,projection:'globe',attributionControl:true,renderWorldCopies:false});}
-  catch(error){console.warn('Globe startup:',error);initRaster();return false;}
-  map.on('load',()=>{st.mapReady=true;clearTimeout(watchdog);$('mapFallback').classList.add('hidden');mapStatus(tr('online'));updateTrafficLayer();updateRouteMap();refreshPins();});
-  map.on('style.load',()=>{try{map.setProjection({type:'globe'})}catch{};if(map.isStyleLoaded()){updateTrafficLayer();updateRouteMap();refreshPins()}});
-  map.on('click',e=>{if(!st.selecting)return;const p={lat:e.lngLat.lat,lon:e.lngLat.lng};if(st.selecting==='start')st.origin=p;else st.destination=p;st.selecting=null;$('mapPickHint').classList.add('hidden');renderRouteLabels();updateRouteMap();activeView('routes')});
-  map.on('zoomend',()=>{$('zoomLabel').textContent='ZOOM '+map.getZoom().toFixed(1)});
-  map.on('error',e=>{console.warn('Globe map error:',e.error?.message||e)});
-  watchdog=setTimeout(()=>{if(!st.mapReady){toast(st.lang==='el'?'Η 3D προβολή δεν ξεκίνησε. Επιστροφή στον χάρτη 2D.':'3D failed; switching to 2D.');initRaster();}},11000);
-  return true;
+async function initMapLibre(requestId){
+ // MapLibre v6 removed supported(). Do not reject WebGL merely because that API is missing.
+ try{if(!window.maplibregl&&window.RoadPulseLoadGlobe)await window.RoadPulseLoadGlobe();}
+ catch(error){console.warn('Globe loading:',error);toast(st.lang==='el'?'Η υδρόγειος δεν φορτώθηκε. Παραμένει ο χάρτης 2D.':'Unable to load globe. 2D map is available.');return false;}
+ if(requestId!==globeRequestId)return false;
+ if(typeof window.maplibregl?.Map!=='function'){toast(st.lang==='el'?'Η υδρόγειος δεν είναι διαθέσιμη σε αυτή τη συσκευή.':'Globe is unavailable on this device.');return false;}
+ if(raster){raster.destroy();raster=null;}if(map){try{map.remove()}catch{}map=null;}
+ st.mapReady=false;trafficSignature='';$('map').classList.add('rp-globe-mode');mapStatus(st.lang==='el'?'Φόρτωση υδρογείου…':'Loading globe…');
+ try{map=new window.maplibregl.Map({container:'map',style:styleGlobe,center:[st.center.lon,st.center.lat],zoom:1.65,maxZoom:19,minZoom:0,attributionControl:true,renderWorldCopies:false,antialias:true});}
+ catch(error){console.warn('Globe startup:',error);initRaster();toast(st.lang==='el'?'Η 3D προβολή χρειάζεται WebGL. Ενεργός ο χάρτης 2D.':'3D needs WebGL. Using 2D map.');return false;}
+ const globeMap=map;
+ globeMap.on('load',()=>{if(map!==globeMap)return;st.mapReady=true;clearTimeout(watchdog);$('mapFallback').classList.add('hidden');mapStatus(tr('online'));globeMap.resize();$('zoomLabel').textContent='ZOOM '+globeMap.getZoom().toFixed(1);updateTrafficLayer();updateRouteMap();refreshPins();});
+ globeMap.on('style.load',()=>{if(map!==globeMap)return;try{globeMap.setProjection({type:'globe'})}catch(e){console.warn('Projection:',e)}if(globeMap.isStyleLoaded()){updateTrafficLayer();updateRouteMap();refreshPins()}});
+ globeMap.on('click',e=>{if(map!==globeMap||!st.selecting)return;const p={lat:e.lngLat.lat,lon:e.lngLat.lng};if(st.selecting==='start')st.origin=p;else st.destination=p;st.selecting=null;$('mapPickHint').classList.add('hidden');renderRouteLabels();updateRouteMap();activeView('routes')});
+ globeMap.on('zoomend',()=>{if(map===globeMap)$('zoomLabel').textContent='ZOOM '+globeMap.getZoom().toFixed(1)});
+ globeMap.on('error',e=>{if(map!==globeMap)return;console.warn('Globe error:',e.error?.message||e);if(e.error?.name==='GPUInitializationError'){initRaster();updateClock();toast(st.lang==='el'?'Το WebGL απέτυχε. Επιστροφή στον χάρτη 2D.':'WebGL failed. Switched to 2D.')}});
+ watchdog=setTimeout(()=>{if(map===globeMap&&!st.mapReady){toast(st.lang==='el'?'Η υδρόγειος δεν ξεκίνησε. Επιστροφή στον 2D χάρτη.':'Globe could not start. Back to 2D.');initRaster();updateClock()}},13000);
+ return true;
 }
 function updateTrafficLayer(){const active=st.trafficOn&&st.trafficEnabled,theme=st.theme==='dark'?'dark':'light';
  if(raster){raster.setTraffic(active,theme,String(st.trafficStamp));return;}
@@ -75,9 +81,13 @@ function renderRouteLabels(){$('routeStartLabel').textContent=st.origin?`${coord
 function updateRouteMap(){if(raster){raster.setRoute(st.route?.geometry||null);return;}if(!map||!map.isStyleLoaded())return;const id='roadpulse-route';if(map.getLayer(id))map.removeLayer(id);if(map.getSource(id))map.removeSource(id);if(routeStartMarker){routeStartMarker.remove();routeStartMarker=null}if(routeEndMarker){routeEndMarker.remove();routeEndMarker=null}if(st.route?.geometry){map.addSource(id,{type:'geojson',data:{type:'Feature',geometry:st.route.geometry,properties:{}}});map.addLayer({id,type:'line',source:id,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#395beb','line-width':6,'line-opacity':.9}});}for(const [key,store] of [['origin','routeStartMarker'],['destination','routeEndMarker']]){const point=st[key];if(point){const el=document.createElement('div');el.className='waypoint-pin';const mark=new window.maplibregl.Marker({element:el}).setLngLat([point.lon,point.lat]).addTo(map);if(key==='origin')routeStartMarker=mark;else routeEndMarker=mark;}}}
 async function routeGo(){if(!st.destination){toast(tr('chooseDestination'));return;}const a=st.origin||st.center,b=st.destination;const p=new URLSearchParams({fromLat:a.lat,fromLon:a.lon,toLat:b.lat,toLon:b.lon});$('routeGo').disabled=true;try{const r=await fetch('/api/route?'+p);const data=await r.json();if(!r.ok)throw Error(data.error||'unavailable');st.route=data;const node=$('routeStats');node.classList.remove('hidden');node.innerHTML=`<div><small>${esc(tr('distance'))}</small><strong>${fmt(data.distanceKm,1)}</strong><small>km</small></div><div><small>${esc(tr(data.trafficAware?'trafficETA':'noLiveETA'))}</small><strong>${fmt(data.minutes)}</strong><small>${esc(tr('minutes'))}</small></div>${data.trafficAware && Number.isFinite(data.trafficDelayMinutes) ? `<div><small>${esc(tr('liveDelay'))}</small><strong>+${fmt(data.trafficDelayMinutes)}</strong><small>min</small></div>` : ''}`;updateRouteMap();if(map){const ll=[a.lon,a.lat],rr=[b.lon,b.lat];map.fitBounds([ll,rr],{padding:90,maxZoom:15,duration:1000})}else raster?.focusRoute(data.geometry?.coordinates)}catch{toast(tr('errorRoute'))}finally{$('routeGo').disabled=false}}
 async function switchGlobe(yes){
- if(!yes){st.globe=false;if(map){map.remove();map=null;}initRaster();updateClock();return;}
- if(map&&st.globe){map.flyTo({zoom:2.2,center:[st.center.lon,st.center.lat],duration:1400});return;}
- const ok=await initMapLibre();st.globe=!!ok;$('view3d').classList.toggle('active',!!ok);$('view2d').classList.toggle('active',!ok);updateClock();
+ const requestId=++globeRequestId;
+ if(!yes){st.globe=false;if(map){try{map.remove()}catch{}map=null;}initRaster();updateClock();return;}
+ if(map&&st.globe){map.flyTo({zoom:1.65,center:[st.center.lon,st.center.lat],duration:1400});return;}
+ const ok=await initMapLibre(requestId);
+ if(requestId!==globeRequestId)return;
+ st.globe=!!ok;$('view3d').classList.toggle('active',!!ok);$('view2d').classList.toggle('active',!ok);
+ $('view3d').setAttribute('aria-pressed',String(!!ok));$('view2d').setAttribute('aria-pressed',String(!ok));updateClock();
 }
 function updateClock(){const dt=new Intl.DateTimeFormat(st.lang==='el'?'el-GR':'en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Athens'}).format(new Date());$('mapStamp').textContent=dt+' · '+(st.globe?'GLOBE':'MERCATOR')+' · TOMTOM';}
 function locate(){if(!navigator.geolocation){toast(tr('permissionDenied'));return;}toast(tr('locating'));navigator.geolocation.getCurrentPosition(p=>{st.city=null;st.center={lat:p.coords.latitude,lon:p.coords.longitude};cityLabel();focusPoint(st.center.lat,st.center.lon);st.origin={...st.center};renderRouteLabels();requestData();toast(tr('positionFound'))},()=>toast(tr('permissionDenied')),{enableHighAccuracy:true,timeout:9000,maximumAge:30000});}
