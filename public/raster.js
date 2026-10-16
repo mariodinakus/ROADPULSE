@@ -15,9 +15,9 @@ class RasterMap {
   this.host=typeof host==='string'?document.getElementById(host):host;
   if(!this.host)throw Error('Raster host missing');
   this.center={lat:Number(opts.lat)||0,lon:Number(opts.lon)||0};this.zoom=clamp(Math.round(opts.zoom||12),1,19);
-  this.theme=opts.theme||'light';this.traffic=false;this.stamp='';this.pinData=[];this.route=null;
+  this.theme=opts.theme||'light';this.mapStyle=opts.mapStyle||'atlas';this.traffic=false;this.stamp='';this.pinData=[];this.route=null;
   this.onClick=opts.onClick||null;this.onMove=opts.onMove||null;this.id=Math.random().toString(36).slice(2);
-  this.host.innerHTML='';this.host.classList.add('rp-raster-host');
+  this.host.innerHTML='';this.host.classList.add('rp-raster-host');this.host.dataset.mapStyle=this.mapStyle;
   const base=document.createElement('div');base.className='rp-tile-pane';this.host.appendChild(base);this.base=base;
   const traffic=document.createElement('div');traffic.className='rp-traffic-pane';this.host.appendChild(traffic);this.trafficPane=traffic;
   const route=document.createElementNS('http://www.w3.org/2000/svg','svg');route.setAttribute('class','rp-route-pane');route.setAttribute('aria-hidden','true');this.host.appendChild(route);this.routePane=route;
@@ -40,6 +40,7 @@ class RasterMap {
  zoomIn(){this.setZoom(this.zoom+1);}zoomOut(){this.setZoom(this.zoom-1);}
  setZoom(z){this.zoom=clamp(Math.round(z),1,19);this.render();this.onMove?.({...this.center});}
  setTraffic(on,theme=this.theme,stamp=''){const changed=this.traffic!==!!on||this.theme!==theme||this.stamp!==stamp;this.traffic=!!on;this.theme=theme;this.stamp=stamp;this.trafficPane.style.display=on?'block':'none';if(changed){this.trafficTiles.forEach(x=>x.remove());this.trafficTiles.clear();this.render();}}
+ setMapStyle(style){this.mapStyle=['atlas','night','classic'].includes(style)?style:'atlas';this.host.dataset.mapStyle=this.mapStyle;}
  setPins(pins){this.pinData=Array.isArray(pins)?pins:[];this.renderPins();}
  setRoute(geometry){this.route=geometry?.coordinates||null;this.renderRoute();}
  focusRoute(points){if(!points?.length)return;const lat=points.reduce((n,p)=>n+p[1],0)/points.length,lon=points.reduce((n,p)=>n+p[0],0)/points.length;this.setView(lat,lon,Math.max(11,Math.min(this.zoom,14)));}
@@ -54,7 +55,51 @@ class RasterMap {
    for(const [k,img]of this.tiles)if(!needed.has(k)){img.remove();this.tiles.delete(k)}for(const [k,img]of this.trafficTiles)if(!tNeeded.has(k)){img.remove();this.trafficTiles.delete(k)}
    this.renderPins();this.renderRoute();
  }
- renderPins(){this.pinPane.innerHTML='';const w=this.host.clientWidth,h=this.host.clientHeight;for(const item of this.pinData){if(!Number.isFinite(item.lat)||!Number.isFinite(item.lon))continue;const p=this.position(item.lat,item.lon);if(p.x< -25||p.x>w+25||p.y< -25||p.y>h+25)continue;const b=document.createElement('button');b.type='button';b.className='rp-raster-pin '+(item.kind==='parking'?'parking':'incident');b.textContent=item.kind==='parking'?'P':(item.icon||'!');b.title=item.title||'';b.style.transform='translate('+Math.round(p.x)+'px,'+Math.round(p.y)+'px)';b.addEventListener('click',e=>{e.stopPropagation();item.onClick?.()});this.pinPane.appendChild(b);}}
+ renderPins(){
+  this.pinPane.innerHTML='';
+  const width=this.host.clientWidth,height=this.host.clientHeight;
+  const isParking=this.pinData.length&&this.pinData[0]?.kind==='parking';
+  // Spatial cluster in pixel space. Blue numbered pins are facility counts, NEVER empty bays.
+  if(isParking && this.zoom<=13){
+   const cell=this.zoom<=10?80:this.zoom<=12?62:45,groups=new Map();
+   for(const item of this.pinData){
+    if(!Number.isFinite(item.lat)||!Number.isFinite(item.lon))continue;
+    const p=this.position(item.lat,item.lon);
+    if(p.x< -35||p.x>width+35||p.y< -35||p.y>height+35)continue;
+    const id=Math.floor(p.x/cell)+':'+Math.floor(p.y/cell);
+    const old=groups.get(id)||{items:[],x:0,y:0,lat:0,lon:0};
+    old.items.push(item);old.x+=p.x;old.y+=p.y;old.lat+=item.lat;old.lon+=item.lon;groups.set(id,old);
+   }
+   for(const group of groups.values()){
+    const n=group.items.length,x=group.x/n,y=group.y/n;
+    const b=document.createElement('button');b.type='button';
+    b.className='rp-raster-pin parking '+(n>1?'cluster':'');
+    b.textContent=n>1?String(n):'P';
+    b.title=n>1?n+' '+(this.mapStyle==='night'?'parking facilities':'καταγεγραμμένα πάρκινγκ'):(group.items[0].title||'Parking');
+    b.setAttribute('aria-label',b.title);
+    b.style.transform='translate('+Math.round(x)+'px,'+Math.round(y)+'px)';
+    b.addEventListener('click',event=>{
+     event.stopPropagation();
+     if(n===1)group.items[0].onClick?.();
+     else this.setView(group.lat/n,group.lon/n,Math.min(16,this.zoom+2));
+    });
+    this.pinPane.appendChild(b);
+   }
+   return;
+  }
+  for(const item of this.pinData){
+   if(!Number.isFinite(item.lat)||!Number.isFinite(item.lon))continue;
+   const p=this.position(item.lat,item.lon);
+   if(p.x< -35||p.x>width+35||p.y< -35||p.y>height+35)continue;
+   const b=document.createElement('button');b.type='button';
+   b.className='rp-raster-pin '+(item.kind==='parking'?'parking':'incident');
+   b.textContent=item.kind==='parking'?'P':(item.icon||'!');
+   b.title=item.title||'';b.setAttribute('aria-label',b.title);
+   b.style.transform='translate('+Math.round(p.x)+'px,'+Math.round(p.y)+'px)';
+   b.addEventListener('click',e=>{e.stopPropagation();item.onClick?.()});
+   this.pinPane.appendChild(b);
+  }
+ }
  renderRoute(){this.routePane.innerHTML='';if(!this.route||this.route.length<2)return;const points=this.route.map(c=>this.position(c[1],c[0])).map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');const poly=document.createElementNS('http://www.w3.org/2000/svg','polyline');poly.setAttribute('points',points);poly.setAttribute('fill','none');poly.setAttribute('stroke','#475ff1');poly.setAttribute('stroke-width','6');poly.setAttribute('stroke-linecap','round');poly.setAttribute('stroke-linejoin','round');this.routePane.appendChild(poly);}
  destroy(){this._resize?.disconnect();this.host.removeEventListener('pointerdown',this._down);this.host.removeEventListener('pointermove',this._move);this.host.removeEventListener('pointerup',this._up);this.host.removeEventListener('pointercancel',this._up);this.host.removeEventListener('wheel',this._wheel);this.host.removeEventListener('dblclick',this._dbl);this.host.classList.remove('rp-raster-host','rp-dragging');this.host.innerHTML='';}
 }
