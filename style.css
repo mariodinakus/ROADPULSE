@@ -80,3 +80,124 @@ body[data-theme=dark]{
 @media(prefers-reduced-motion:reduce){
  .sidebar-scroll,.right-rail,.search-results,.city-chip-row,.filters{scroll-behavior:auto}
 }
+
+/* ROADPULSE 3.2 · Urban Atlas / street design system */
+#map.rp-raster-host{background:#cbdfe5}
+#map.rp-raster-host .rp-tile-pane{transition:filter .32s ease;transform:translateZ(0)}
+#map.rp-raster-host[data-map-style="atlas"] .rp-tile-pane{
+ filter:saturate(.66) contrast(1.12) brightness(1.03) sepia(.07) hue-rotate(170deg);
+}
+#map.rp-raster-host[data-map-style="night"]{background:#07172a}
+#map.rp-raster-host[data-map-style="night"] .rp-tile-pane{
+ filter:invert(.87) hue-rotate(175deg) saturate(.66) contrast(1.15) brightness(.82);
+}
+#map.rp-raster-host[data-map-style="classic"] .rp-tile-pane{filter:none}
+#map.rp-raster-host[data-map-style="atlas"]::after,
+#map.rp-raster-host[data-map-style="night"]::after{
+ content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+ background-image:linear-gradient(to right,rgba(48,98,150,.085) 1px,transparent 1px),
+ linear-gradient(to bottom,rgba(48,98,150,.085) 1px,transparent 1px);
+ background-size:74px 74px;
+ mask-image:radial-gradient(ellipse at 48% 50%,#000 10%,transparent 94%);
+}
+#map.rp-raster-host[data-map-style="night"]::after{
+ background-image:linear-gradient(to right,rgba(80,174,228,.17) 1px,transparent 1px),
+ linear-gradient(to bottom,rgba(80,174,228,.17) 1px,transparent 1px);
+}
+.map-style-switch{
+ position:absolute;z-index:7;left:23px;bottom:127px;
+ display:flex;flex-direction:column;gap:7px;padding:10px 12px 12px;
+ background:rgba(249,252,255,.94);border:1px solid #fff;
+ border-radius:17px;box-shadow:0 13px 32px rgba(10,31,70,.19);
+ backdrop-filter:blur(20px);max-width:calc(100% - 40px);
+}
+.map-style-title{font-size:9px;letter-spacing:1.7px;font-weight:900;color:#536c91}
+.map-style-switch>div{display:flex;gap:5px}
+.map-style-switch button{
+ font-size:10px;font-weight:800;letter-spacing:.15px;border:1px solid transparent;
+ color:#657690;border-radius:10px;background:#f1f5fc;padding:9px 10px;
+ transition:background .18s ease,transform .18s ease,color .18s ease;
+ white-space:nowrap;
+}
+.map-style-switch button:hover{background:#e7eeff;color:#234c89;transform:translateY(-1px)}
+.map-style-switch button.active{
+ background:linear-gradient(130deg,#173860,#2869bd);color:#fff;
+ box-shadow:0 5px 12px #143e6d47;
+}
+#map.rp-globe-mode~.map-style-switch{display:none}
+#map.rp-raster-host[data-map-style="night"]~.map-title h2{color:#edf8ff;text-shadow:0 4px 14px #001a39b5}
+#map.rp-raster-host[data-map-style="night"]~.map-title .map-kicker,
+#map.rp-raster-host[data-map-style="night"]~.map-title #mapStamp{color:#d9ebff;text-shadow:0 1px 10px #001127}
+#map.rp-raster-host[data-map-style="night"]~.map-style-switch{
+ background:rgba(8,22,43,.89);border-color:#6481b433;
+}
+#map.rp-raster-host[data-map-style="night"]~.map-style-switch .map-style-title{color:#acc6ec}
+#map.rp-raster-host[data-map-style="night"]~.map-style-switch button{background:#263858;color:#bfd2f1}
+#map.rp-raster-host[data-map-style="night"]~.map-style-switch button.active{
+ background:linear-gradient(135deg,#2275d7,#4e89fa);color:white
+}
+#map.rp-raster-host[data-map-style="night"]~.map-bottom .map-credit,
+#map.rp-raster-host[data-map-style="night"]~.map-bottom .zoom-readout,
+#map.rp-raster-host[data-map-style="night"]~.map-quick-status{
+ color:#e0ecff;background:#0b1b37df;border:1px solid #9abcf038;
+}
+#map.rp-raster-host[data-map-style="night"]~.map-switch,
+#map.rp-raster-host[data-map-style="night"]~.map-zoom{
+ background:#0b1b37ec;border-color:#9abcf038
+}
+#map.rp-raster-host[data-map-style="night"]~.map-switch button,
+#map.rp-raster-host[data-map-style="night"]~.map-zoom button{color:#e8f1ff}
+#map.rp-raster-host[data-map-style="night"]~.map-switch button.active{background:#3f7ce5;color:#fff}
+.rp-raster-pin.parking{
+ background:linear-gradient(145deg,#0c3f7c,#227ae5);border:2px solid #fff;
+ color:#fff;min-width:30px;width:30px;height:30px;border-radius:11px;
+ box-shadow:0 4px 0 rgba(8,55,103,.32),0 9px 20px #06285c5a;
+ font-size:12px;letter-spacing:-.3px;transition:scale .16s ease;
+}
+.rp-raster-pin.parking.cluster{
+ width:41px;height:41px;font-size:13px;border-radius:15px;
+ background:linear-gradient(135deg,#075988,#38b7d4);
+ border:3px solid #fcffff;box-shadow:0 0 0 5px #23a6d422,0 12px 23px #00285b55;
+}
+.rp-raster-pin.parking.cluster:hover{scale:1.12}
+.parking-source-line{
+ margin-top:13px;color:var(--sub);font-size:10px;letter-spacing:.12px;
+ padding:9px 11px;border:1px solid var(--border);
+ border-radius:10px;background:var(--citysurface);line-height:1.5;
+}
+.parking-record{
+ margin:10px 0;padding:14px 12px;border:1px solid var(--border);
+ border-radius:15px;background:var(--citysurface);
+ box-shadow:0 5px 15px rgba(22,42,76,.035);
+ transition:border-color .2s ease,box-shadow .2s ease
+}
+.parking-record:hover{border-color:var(--blue);box-shadow:0 6px 20px rgba(32,78,164,.10)}
+.parking-record .record-head{gap:6px}
+.parking-record .record-category{font-size:9px;max-width:78%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.parking-record h3{font-size:13px;line-height:1.35}
+.parking-record .parking-address{font-size:10px;line-height:1.5;min-height:10px}
+.parking-price-line{
+ margin:11px 0 5px;display:block;font-weight:850;font-size:12px;
+ color:var(--blue);background:var(--blue-lite);border-radius:9px;padding:9px 10px
+}
+.price-evidence{font-size:9px;display:block;font-weight:500;line-height:1.5;margin-top:3px;opacity:.9}
+.parking-metadata{display:block;font-size:9px;line-height:1.6;color:var(--sub);margin-top:5px}
+.parking-metadata.restricted{color:#bd7743}
+.parking-metadata.unknown{opacity:.9}
+.parking-trust-note{
+ display:flex;gap:10px;margin-top:22px;padding:14px;
+ border:1px solid var(--border);border-radius:15px;
+ background:var(--blue-lite);color:var(--ink)
+}
+.parking-trust-icon{font-size:21px;color:var(--blue);flex-shrink:0}
+.parking-trust-note strong{font-size:12px}
+.parking-trust-note p{font-size:10px;line-height:1.65;color:var(--sub);margin:6px 0 0}
+@media(max-width:700px){
+ .map-style-switch{left:9px;bottom:89px;padding:7px 8px;border-radius:13px;gap:5px}
+ .map-style-title{font-size:8px;letter-spacing:.9px}
+ .map-style-switch button{padding:7px 7px;font-size:9px}
+ #map.rp-raster-host[data-map-style="night"]~.map-title h2{font-size:20px}
+}
+@media(prefers-reduced-motion:reduce){
+ .rp-raster-pin.parking,#map.rp-raster-host .rp-tile-pane,.map-style-switch button{transition:none}
+}
