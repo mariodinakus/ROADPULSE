@@ -94,3 +94,12 @@ If a previous version persists in a browser, clear site data once. This release 
 - CSP and browser security headers block external script injection, prevent embedding this site in third-party frames, and restrict external map/font access to named providers.
 - `public/legal.html` documents the OpenStreetMap ODbL, OpenFreeMap and TomTom notices and basic privacy limitations. The original UI/code rights are separate from the providers' map data and their licenses.
 - This is a public, anonymous app. Security cannot guarantee immunity from attacks. Activate GitHub/Vercel MFA, restrict collaborator permissions, and monitor TomTom quota.
+
+
+## Abuse guard (2026-10)
+
+- `/api/traffic` has IP-based fixed-window throttling (180 requests/minute, 1200/day per IP **per warm serverless instance**), an upstream request budget per warm instance (250/minute, 2500/day), and maximum eight concurrent TomTom requests per warm instance.
+- Identical tiles are deduplicated while downloading, cached in a short-lived process cache, and cached at the CDN edge for two minutes; failures are never cached.
+- Basic cross-origin hotlink checks apply, without claiming to block non-browser clients. Anonymous IP hashes, using an ephemeral per-instance salt, exist only in memory and expire with the runtime.
+- **Security limitation:** Warm-function memory is not shared between Vercel instances; this is *best-effort* abuse protection, **not globally enforceable rate limiting** or a hard spending cap. For an enforceable per-user/per-account limit, activate Vercel WAF / an external shared Redis rate limiter, and configure TomTom account quota alerts or limits as available. Vercel Firewall API currently returns `404 Seawall Config not found` in this account.
+- See `/legal.html` for data attribution and copyright. Never commit TomTom keys. Production secret is `TOMTOM_API_KEY`, stored as a Sensitive Environment Variable on Vercel.
