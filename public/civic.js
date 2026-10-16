@@ -62,7 +62,7 @@
     const match=day.match(/^(\d{4})-(\d\d)-(\d\d)$/);if(!match)return;
     const dt=new Date(Date.UTC(Number(match[1]),Number(match[2])-1,Number(match[3]))),wd=dt.getUTCDay();
     const rain=$('pressureRain')?.checked,event=$('pressureEvent')?.checked;
-    const slots=Array.from({length:10},(_,i)=>{const hr=6+i*2;return {hour:hr,score:demand(hr,wd,center,rain,event)}});
+    const slots=Array.from({length:9},(_,i)=>{const hr=6+i*2;return {hour:hr,score:demand(hr,wd,center,rain,event)}});
     const nowHour=Number(calendarText().slice(11,13)), today=day===calendarText().slice(0,10);
     const usable=slots.filter(s=>!today||s.hour>=nowHour);
     const best=(usable.length?usable:slots).reduce((a,b)=>a.score<=b.score?a:b);
