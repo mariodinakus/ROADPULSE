@@ -23,7 +23,7 @@
   methodNote:['Ο δείκτης είναι ο μέσος όρος ποσοστιαίας μείωσης ταχύτητας στα διαθέσιμα δείγματα. Δεν αποτελεί πρόβλεψη, χρόνο διαδρομής ή ποσοστό κορεσμού ολόκληρης της Θεσσαλονίκης.','The index averages percentage speed reductions across available samples. It is not a future forecast, route travel time or the congestion rate of the entire city.'],
   readMethod:['Πηγή / τεκμηρίωση TomTom ↗','TomTom data / API documentation ↗']
  };
- let mode='parking',last=null,lastCoords=null,busy=false,reqNumber=0,lastLoadAt=0;
+ let mode='parking',last=null,lastCoords=null,busy=false,reqNumber=0,lastLoadAt=0,refreshAfter=false;
  function gpsCenter(){
   const c=window.RoadPulseState?.center||{lat:40.634,lon:22.944};
   return {lat:Number(c.lat),lon:Number(c.lon)};
@@ -126,7 +126,7 @@
    }
    error.textContent=previous?txt('Αποτυχία ανανέωσης. Τα προηγούμενα δεδομένα είναι παλιότερα.','Refresh failed; previous snapshot may be stale.'):txt('Δεν έγινε σύνδεση με το TomTom Flow. Δοκίμασε αργότερα.','TomTom Flow could not be reached. Try later.');
    error.hidden=false;
-  }finally{busy=false;btn.disabled=false;}
+  }finally{busy=false;btn.disabled=false;if(refreshAfter){refreshAfter=false;if(mode==='traffic'&&window.RoadPulseState?.view==='forecast'){if(busy)refreshAfter=true;else load();}}}
  }
  function attach(){
   $('labParking')?.addEventListener('click',()=>select('parking'));
