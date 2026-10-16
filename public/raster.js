@@ -58,11 +58,21 @@ class RasterMap {
  renderPins(){
   this.pinPane.innerHTML='';
   const width=this.host.clientWidth,height=this.host.clientHeight;
-  const isParking=this.pinData.length&&this.pinData[0]?.kind==='parking';
+  const user=this.pinData.find(item=>item.kind==='user');
+  const showUser=()=>{
+   if(!user||!Number.isFinite(user.lat)||!Number.isFinite(user.lon))return;
+   const p=this.position(user.lat,user.lon);
+   if(p.x<-35||p.x>width+35||p.y<-35||p.y>height+35)return;
+   const b=document.createElement('button');b.type='button';b.className='rp-raster-pin user';b.textContent='◎';b.title=user.title||'Η θέση μου';b.setAttribute('aria-label',b.title);
+   b.style.transform='translate('+Math.round(p.x)+'px,'+Math.round(p.y)+'px)';
+   b.addEventListener('click',e=>{e.stopPropagation();user.onClick?.()});this.pinPane.appendChild(b);
+  };
+  const isParking=this.pinData.some(item=>item.kind==='parking');
   // Spatial cluster in pixel space. Blue numbered pins are facility counts, NEVER empty bays.
   if(isParking && this.zoom<=13){
    const cell=this.zoom<=10?80:this.zoom<=12?62:45,groups=new Map();
    for(const item of this.pinData){
+    if(item.kind==='user')continue;
     if(!Number.isFinite(item.lat)||!Number.isFinite(item.lon))continue;
     const p=this.position(item.lat,item.lon);
     if(p.x< -35||p.x>width+35||p.y< -35||p.y>height+35)continue;
@@ -85,9 +95,10 @@ class RasterMap {
     });
     this.pinPane.appendChild(b);
    }
-   return;
+   showUser();return;
   }
   for(const item of this.pinData){
+   if(item.kind==='user')continue;
    if(!Number.isFinite(item.lat)||!Number.isFinite(item.lon))continue;
    const p=this.position(item.lat,item.lon);
    if(p.x< -35||p.x>width+35||p.y< -35||p.y>height+35)continue;
@@ -99,6 +110,7 @@ class RasterMap {
    b.addEventListener('click',e=>{e.stopPropagation();item.onClick?.()});
    this.pinPane.appendChild(b);
   }
+  showUser();
  }
  renderRoute(){this.routePane.innerHTML='';if(!this.route||this.route.length<2)return;const points=this.route.map(c=>this.position(c[1],c[0])).map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');const poly=document.createElementNS('http://www.w3.org/2000/svg','polyline');poly.setAttribute('points',points);poly.setAttribute('fill','none');poly.setAttribute('stroke','#475ff1');poly.setAttribute('stroke-width','6');poly.setAttribute('stroke-linecap','round');poly.setAttribute('stroke-linejoin','round');this.routePane.appendChild(poly);}
  destroy(){this._resize?.disconnect();this.host.removeEventListener('pointerdown',this._down);this.host.removeEventListener('pointermove',this._move);this.host.removeEventListener('pointerup',this._up);this.host.removeEventListener('pointercancel',this._up);this.host.removeEventListener('wheel',this._wheel);this.host.removeEventListener('dblclick',this._dbl);this.host.classList.remove('rp-raster-host','rp-dragging');this.host.innerHTML='';}
