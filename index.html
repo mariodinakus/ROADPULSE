@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1018" />
+  <meta name="description" content="ROADPULSE: live traffic with a provider, mapped parking and routes on a beautiful map or globe." />
+  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.14.0/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="/style.css" />
+  <title>ROADPULSE — Traffic & Parking</title>
+</head>
+<body data-theme="dark">
+  <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h4a5 5 0 0 0 0-10h-1a3 3 0 0 1 0-6h5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a17 17 0 0 1 0 18M12 3a17 17 0 0 0 0 18"/></symbol>
+    <symbol id="i-parking" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 17V7h4a3 3 0 1 1 0 6H9"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/></symbol>
+    <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15A8 8 0 0 1 9 4a8 8 0 1 0 11 11Z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5 9a7 7 0 0 1 12-3l3 3M4 15l3 3a7 7 0 0 0 12-3"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 8a5 5 0 0 0-8.8-3 5 5 0 0 0-8.8 3c0 5 8.8 11 8.8 11s8.8-6 8.8-11Z"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M13 5h6v6M19 5l-9 9M19 13v6H5V5h6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></symbol>
+    <symbol id="i-navigation" viewBox="0 0 24 24"><path d="m3 11 18-8-8 18-2-8-8-2Z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><path d="m5 10 2-5h10l2 5 2 2v6H3v-6l2-2ZM3 10h18M7 15h1M16 15h1"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16M8 16V9M13 16V5M18 16v-4"/></symbol>
+  </svg>
+  <header class="header">
+    <div class="brand"><div class="brandmark"><span class="mark-dot"></span><span class="mark-line"></span></div><div class="brandtype">ROAD<span>PULSE</span><small>MOVE SMARTER</small></div></div>
+    <span class="header-sep"></span>
+    <div class="header-label"><span class="tiny-pulse"></span><span data-i18n="brandSub">Ο κόσμος σε κίνηση</span></div>
+    <div class="header-search">
+      <form id="searchForm" autocomplete="off"><svg class="ic"><use href="#i-search"/></svg><input id="searchInput" type="search" maxlength="100" minlength="3" placeholder="Αναζήτηση πόλης, περιοχής, δρόμου..." aria-label="Αναζήτηση περιοχής" /><kbd>↵</kbd></form>
+      <div id="searchResults" class="search-results hidden" role="listbox"></div>
+    </div>
+    <div class="header-actions"><button id="langBtn" class="header-pill" aria-label="Change language">EN</button><button id="themeBtn" class="iconbtn header-icon" aria-label="Change theme"><svg class="ic"><use href="#i-sun"/></svg></button><div class="header-avatar">R<span>.</span></div></div>
+  </header>
+  <div class="app">
+    <aside class="rail" aria-label="Navigation">
+      <button class="railbtn active" data-tab="parking" title="Parking"><svg class="ic"><use href="#i-parking"/></svg></button>
+      <button class="railbtn" data-tab="route" title="Routes"><svg class="ic"><use href="#i-route"/></svg></button>
+      <button class="railbtn" data-tab="explore" title="Explore"><svg class="ic"><use href="#i-globe"/></svg></button>
+      <div class="rail-bottom"><button class="railbtn" id="railLocate" title="My location"><svg class="ic"><use href="#i-locate"/></svg></button></div>
+    </aside>
+    <aside class="sidepane" id="sidepane">
+      <div class="panel-scroll">
+        <section class="intro"><div class="eyebrow"><span class="eyeline"></span><span data-i18n="dashboard">DASHBOARD</span> <span class="eyebrow-right">01 / 03</span></div><h1 id="panelTitle">Βρες τη θέση σου<span>.</span></h1><p id="panelDesc">Έξυπνη αναζήτηση χώρων στάθμευσης, διαδρομών και κυκλοφορίας σε έναν χάρτη.</p></section>
+        <div class="city-block"><div class="sectionheading"><span data-i18n="yourArea">Η ΠΕΡΙΟΧΗ ΣΟΥ</span><span class="muted-mini" id="coordLabel">40.638° N, 22.950° E</span></div><div class="city-current"><span class="city-pin"><svg class="ic"><use href="#i-pin"/></svg></span><div><strong id="cityName">Θεσσαλονίκη</strong><small id="citySub">Ελλάδα · Κέντρο πόλης</small></div><span class="current-dot"></span></div><div id="cityChips" class="chips"><button class="chip selected" data-city="thess">Θεσσαλονίκη</button><button class="chip" data-city="menemeni">Μενεμένη</button><button class="chip" data-city="athens">Αθήνα</button><button class="chip" data-city="patras">Πάτρα</button><button class="chip" data-city="heraklion">Ηράκλειο</button></div></div>
+        <div id="parkingPanel" class="tab-panel">
+          <div class="sectionheading withmargin"><span data-i18n="parkingPlaces">ΧΩΡΟΙ ΣΤΑΘΜΕΥΣΗΣ</span><button id="refreshParking" class="tiny-action" title="Refresh parking"><svg class="ic"><use href="#i-refresh"/></svg> <span data-i18n="refresh">Ανανέωση</span></button></div>
+          <div class="filter-row" id="feeFilters"><button class="filter active" data-fee="all" data-i18n="all">Όλα</button><button class="filter" data-fee="free" data-i18n="free">Δωρεάν</button><button class="filter" data-fee="paid" data-i18n="paid">Με χρέωση</button><button class="filter" data-fee="covered" data-i18n="covered">Στεγασμένα</button></div>
+          <div class="radius-row"><span data-i18n="searchRadius">Ακτίνα αναζήτησης</span><div class="radius-tabs"><button class="radius-btn" data-radius="1000">1 km</button><button class="radius-btn active" data-radius="2500">2.5 km</button><button class="radius-btn" data-radius="4500">4.5 km</button></div></div>
+          <div class="results-head"><span id="parkingSummary">Φόρτωση πραγματικών δεδομένων...</span><span id="parkingSourceTag">OSM DATA</span></div>
+          <div id="parkingList" class="parking-list"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+          <button id="showMore" class="load-more hidden" data-i18n="showMore">Περισσότερα <svg class="ic"><use href="#i-chevron"/></svg></button>
+        </div>
+        <div id="routePanel" class="tab-panel hidden"><div class="sectionheading withmargin"><span data-i18n="planRoute">ΣΧΕΔΙΑΣΜΟΣ ΔΙΑΔΡΟΜΗΣ</span></div><div class="route-hint"><svg class="ic"><use href="#i-info"/></svg><span data-i18n="routeHint">Όρισε αφετηρία με την τοποθεσία σου ή κλικ στον χάρτη και επίλεξε προορισμό.</span></div><div class="route-fields"><div class="route-field start"><span class="route-point"></span><div><small data-i18n="start">ΑΦΕΤΗΡΙΑ</small><strong id="routeStartText">Κέντρο χάρτη</strong></div><button id="setStartMode" title="Pick origin"><svg class="ic"><use href="#i-pin"/></svg></button></div><div class="route-connector"></div><div class="route-field destination"><span class="route-point"></span><div><small data-i18n="destination">ΠΡΟΟΡΙΣΜΟΣ</small><strong id="routeDestText">Επίλεξε στον χάρτη</strong></div><button id="setDestMode" title="Pick destination"><svg class="ic"><use href="#i-pin"/></svg></button></div></div><div class="btn-stack"><button id="routeMyLoc" class="secondary-btn"><svg class="ic"><use href="#i-locate"/></svg> <span data-i18n="useLocation">Χρήση τοποθεσίας μου</span></button><button id="makeRoute" class="primary-btn"><svg class="ic"><use href="#i-route"/></svg> <span data-i18n="calculateRoute">Υπολογισμός διαδρομής</span> <svg class="ic arrow-ic"><use href="#i-arrow"/></svg></button></div><div id="routeResult" class="route-result hidden"></div><p class="panel-note" data-i18n="routeNote">Οι χρόνοι OSRM είναι εκτιμήσεις χωρίς ζωντανή κίνηση.</p></div>
+        <div id="explorePanel" class="tab-panel hidden"><div class="sectionheading withmargin" data-i18n="worldView">ΕΞΕΡΕΥΝΗΣΗ ΚΟΣΜΟΥ</div><div class="explore-hero"><svg class="ic"><use href="#i-globe"/></svg><strong data-i18n="worldTitle">Ο πλανήτης. Ένας χάρτης.</strong><span data-i18n="worldDesc">Περιστρέψου πάνω στη Γη, διάλεξε πόλη και κάνε ζουμ μέχρι τον δρόμο.</span><button id="enterGlobe" class="primary-btn"><svg class="ic"><use href="#i-globe"/></svg> <span data-i18n="enterGlobe">Άνοιγμα υδρογείου</span></button></div><div class="sectionheading withmargin" data-i18n="quickCities">ΓΡΗΓΟΡΕΣ ΜΕΤΑΒΑΣΕΙΣ</div><div class="explore-cities"><button data-city="thess">Θεσσαλονίκη <svg class="ic"><use href="#i-arrow"/></svg></button><button data-city="athens">Αθήνα <svg class="ic"><use href="#i-arrow"/></svg></button><button data-city="london">Λονδίνο <svg class="ic"><use href="#i-arrow"/></svg></button><button data-city="newyork">Νέα Υόρκη <svg class="ic"><use href="#i-arrow"/></svg></button><button data-city="tokyo">Τόκιο <svg class="ic"><use href="#i-arrow"/></svg></button></div></div>
+      </div>
+      <footer class="panel-footer"><svg class="ic"><use href="#i-info"/></svg><span data-i18n="footerSource">OSM / Overpass · Κενά: όχι live</span><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OSM</a></footer>
+    </aside>
+    <main class="mapstage">
+      <div id="map" role="application" aria-label="Interactive map of roads and parking"></div>
+      <div class="map-top-left"><div class="map-eyebrow"><span class="mini-cross">⌖</span><span id="mapPlace">THESSALONIKI, GR</span><span class="map-sep"></span><span id="mapTime">--:--</span></div><div class="map-tagline" id="mapTagline">Your city, in motion.</div></div>
+      <div class="map-mode-switch"><button id="mapMode2d" class="mode-button active"><svg class="ic"><use href="#i-layers"/></svg> 2D</button><button id="mapModeGlobe" class="mode-button"><svg class="ic"><use href="#i-globe"/></svg> 3D GLOBE</button></div>
+      <button id="searchArea" class="search-area"><svg class="ic"><use href="#i-search"/></svg> <span data-i18n="searchThisArea">Αναζήτηση εδώ</span></button>
+      <div class="map-controls"><button id="mapZoomIn" title="Zoom in"><svg class="ic"><use href="#i-plus"/></svg></button><button id="mapZoomOut" title="Zoom out"><svg class="ic"><use href="#i-minus"/></svg></button><span class="control-gap"></span><button id="mapLocate" title="My location"><svg class="ic"><use href="#i-locate"/></svg></button><button id="mapTheme" title="Change map style"><svg class="ic"><use href="#i-layers"/></svg></button></div>
+      <div class="map-bottom-left"><div class="traffic-card"><div class="traffic-head"><span class="traffic-icon"><svg class="ic"><use href="#i-car"/></svg></span><div><strong data-i18n="traffic">Κυκλοφορία</strong><small id="trafficStatus" data-i18n="trafficChecking">Έλεγχος σύνδεσης…</small></div><label class="toggle" title="Traffic layer"><input type="checkbox" id="trafficToggle" disabled /><span></span></label></div><div id="trafficNoKey" class="traffic-nokey"><span data-i18n="trafficNeedsKey">Για live κίνηση απαιτείται TomTom API key στο Vercel.</span><a href="https://www.google.com/maps/@40.638,22.95,12z/data=!5m1!1e1" id="googleTrafficLink" target="_blank" rel="noopener"><span data-i18n="openLiveTraffic">Δες live κίνηση στους Χάρτες</span><svg class="ic"><use href="#i-external"/></svg></a></div><div id="trafficLegend" class="traffic-legend hidden"><span><i class="legend-green"></i><span data-i18n="lightTraffic">Ελεύθερα</span></span><span><i class="legend-orange"></i><span data-i18n="mediumTraffic">Αργά</span></span><span><i class="legend-red"></i><span data-i18n="heavyTraffic">Συμφόρηση</span></span></div></div><div class="data-caption" id="dataCaption">MAP DATA · OPENSTREETMAP <span>↗</span></div></div>
+      <div id="focusCard" class="focus-card hidden" aria-live="polite"></div>
+      <div class="map-bottom-right"><div class="scale-pill"><span id="mapZoomLabel">ZOOM 12</span><span class="scale-dot"></span><span id="projectionLabel">MERCATOR</span></div></div>
+      <div id="mapClickHint" class="click-hint hidden">Κλικ στον χάρτη για επιλογή σημείου <button id="cancelPick"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    </main>
+  </div>
+  <nav class="mobile-nav" aria-label="Mobile navigation"><button class="mobile-navbtn active" data-tab="parking"><svg class="ic"><use href="#i-parking"/></svg><span data-i18n="parkingNav">Πάρκινγκ</span></button><button class="mobile-navbtn" data-tab="route"><svg class="ic"><use href="#i-route"/></svg><span data-i18n="routesNav">Διαδρομές</span></button><button class="mobile-navbtn" data-tab="explore"><svg class="ic"><use href="#i-globe"/></svg><span data-i18n="exploreNav">Υδρόγειος</span></button><button class="mobile-navbtn" id="mobileLocate"><svg class="ic"><use href="#i-locate"/></svg><span data-i18n="myLocationNav">Θέση μου</span></button></nav>
+  <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+  <script src="https://unpkg.com/maplibre-gl@6.14.0/dist/maplibre-gl.js" defer></script>
+  <script src="/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "ROADPULSE — Traffic & Parking",
+  "short_name": "ROADPULSE",
+  "description": "Traffic and public parking on the map and globe",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1018",
+  "theme_color": "#0b1018",
+  "icons": [{"src":"/assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

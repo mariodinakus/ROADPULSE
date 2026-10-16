@@ -1,0 +1,11 @@
+{
+  "name": "roadpulse-traffic-parking",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mobile-first traffic, parking and globe map — zero build dependencies",
+  "scripts": {
+    "dev": "npx vercel dev",
+    "start": "npx vercel dev"
+  },
+  "engines": { "node": ">=20" }
+}

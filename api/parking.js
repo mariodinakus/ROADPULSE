@@ -1,0 +1,62 @@
+const instances = [
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.nchc.org.tw/api/interpreter',
+  'https://overpass-api.de/api/interpreter'
+];
+
+function distanceKm(a,b,c,d) {
+  const rad = Math.PI/180, dLat=(c-a)*rad, dLon=(d-b)*rad;
+  const k = Math.sin(dLat/2)**2 + Math.cos(a*rad)*Math.cos(c*rad)*Math.sin(dLon/2)**2;
+  return 12742 * Math.atan2(Math.sqrt(k), Math.sqrt(1-k));
+}
+
+module.exports = async function handler(req,res) {
+  if (req.method !== 'GET') return res.status(405).end();
+  const lat=Number(req.query.lat), lon=Number(req.query.lon);
+  const radius=Math.min(4500,Math.max(500,Number(req.query.radius)||2500));
+  if (!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>85||Math.abs(lon)>180) {
+    return res.status(400).json({error:'Invalid coordinates'});
+  }
+  const q=`[out:json][timeout:17];(nwr(around:${Math.round(radius)},${lat},${lon})["amenity"="parking"];nwr(around:${Math.round(radius)},${lat},${lon})["parking"="street_side"];);out center 260;`;
+  for (const instance of instances) {
+    try {
+      const r=await fetch(instance,{
+        method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded','User-Agent':'RoadPulse/1.0 (OpenStreetMap community map; https://github.com)'},
+        body:new URLSearchParams({data:q}).toString(),
+        signal:AbortSignal.timeout(10000)
+      });
+      if(!r.ok) continue;
+      const data=await r.json();
+      if (!Array.isArray(data.elements)) continue;
+      const entries=[];
+      const seen=new Set();
+      for(const item of data.elements){
+        const tags=item.tags||{};
+        if(['private','no','customers','permit'].includes(tags.access)) continue;
+        const pLat=Number(item.lat??item.center?.lat),pLon=Number(item.lon??item.center?.lon);
+        if(!Number.isFinite(pLat)||!Number.isFinite(pLon)) continue;
+        const id=`${item.type}/${item.id}`;
+        if(seen.has(id)) continue;
+        seen.add(id);
+        const distance=distanceKm(lat,lon,pLat,pLon);
+        if(distance>radius/1000+0.2)continue;
+        const cap=parseInt(tags.capacity,10);
+        entries.push({id,lat:pLat,lon:pLon,
+          name:String(tags.name||(['multi-storey','underground'].includes(tags.parking)?'Στεγασμένος χώρος στάθμευσης':tags.parking==='street_side'?'Στάθμευση παρά την οδό':'Χώρος στάθμευσης')).slice(0,120),
+          type:String(tags.parking||'surface'), fee:tags.fee==='yes'?'paid':tags.fee==='no'?'free':'unknown',
+          capacity:Number.isInteger(cap)&&cap>0&&cap<100000?cap:null,
+          wheelchair:tags['capacity:disabled']||null,
+          access:tags.access||'unknown',
+          openingHours:tags.opening_hours?String(tags.opening_hours).slice(0,110):null,
+          website:(tags.website&&/^https?:\/\//.test(tags.website))?tags.website:null,
+          distanceKm:Math.round(distance*100)/100
+        });
+      }
+      entries.sort((a,b)=>a.distanceKm-b.distanceKm);
+      res.setHeader('Cache-Control','public, max-age=0, s-maxage=180, stale-while-revalidate=300');
+      return res.status(200).json({items:entries.slice(0,160),count:entries.length,source:'OpenStreetMap / Overpass',asOf:new Date().toISOString(),liveOccupancy:false});
+    } catch { /* Try the next public Overpass instance. */ }
+  }
+  res.setHeader('Cache-Control','no-store');
+  return res.status(503).json({error:'The OpenStreetMap parking service is temporarily unavailable. Try again.'});
+};
