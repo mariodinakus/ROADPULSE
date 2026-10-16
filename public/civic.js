@@ -6,6 +6,38 @@
   const el = () => language() === 'el';
   const money = n => new Intl.NumberFormat(el() ? 'el-GR' : 'en-GB', {style:'currency',currency:'EUR'}).format(n);
   const escape = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const labels={
+    forecast:['Πρόβλεψη','Forecast'],locate:['◎ Εντόπισε τη θέση μου','◎ Find my location'],
+    priceHeading:['Πόσο θα πληρώσω;','How much will I pay?'],
+    thesiIntro:['Επίσημη χρέωση THESi: 1,70€/ώρα, ανά λεπτό. Ισχύει μόνο σε θέσεις επισκεπτών (λευκή διαγράμμιση).','Official THESi tariff: €1.70/hour, billed by the minute. Only for marked visitor bays (white lines).'],
+    arrival:['Έναρξη στάθμευσης','Parking starts'],duration:['Διάρκεια','Duration'],
+    holiday:['Η ημέρα είναι επίσημη αργία','This date is a public holiday'],
+    priceResult:['ΕΚΤΙΜΩΜΕΝΗ ΧΡΕΩΣΗ','ESTIMATED CHARGE'],
+    white:['Λευκές: επισκέπτες','White: visitors'],blue:['Μπλε: κάτοικοι','Blue: resident permits'],yellow:['Κίτρινες: ειδική χρήση','Yellow: restricted use'],
+    modelHeading:['Πότε θα παρκάρω ευκολότερα;','When might parking be easier?'],
+    modelIntro:['Σύγκριση ωρών με εξηγήσιμο υποθετικό δείκτη ζήτησης, όχι μετρημένες ελεύθερες θέσεις.','Compare hours using an explainable scenario-based demand index, not observed free parking spaces.'],
+    date:['Ημερομηνία','Date'],rain:['Σενάριο βροχής (χειροκίνητο)','Rain scenario (manual)'],event:['Μεγάλη εκδήλωση στην περιοχή','Major local event'],
+    refreshModel:['↻ Ενημέρωση μοντέλου','↻ Recalculate model'],cityTips:['Χρήσιμες κινήσεις','Practical city tips'],
+    tip1:['• Δες τα συμβάντα στην πορεία σου.','• Check incidents on your route.'],
+    tip2:['• Σύγκρινε THESi και στεγασμένα πάρκινγκ.','• Compare THESi with off-street parking.'],
+    tip3:['• Αν το κέντρο είναι δύσκολο, εξέτασε στάθμευση κοντά σε στάση μετρό.','• Consider parking near a metro station instead of entering the centre.'],
+    tip4:['• Η επιτόπια σήμανση υπερισχύει πάντα.','• Street signs always take priority.'],
+    metro:['Μετρό Θεσσαλονίκης ↗','Thessaloniki Metro ↗']
+  };
+  function localize(){
+    document.querySelectorAll('[data-civic]').forEach(node=>{
+      const words=labels[node.dataset.civic];if(words)node.textContent=words[el()?0:1];
+    });
+    const options=$('thesiMinutes')?.options;
+    if(options){const gr=['30 λεπτά','1 ώρα','1,5 ώρα','2 ώρες','3 ώρες','4 ώρες'];
+      const en=['30 minutes','1 hour','1.5 hours','2 hours','3 hours','4 hours'];
+      Array.from(options).forEach((item,i)=>item.textContent=(el()?gr:en)[i]||item.textContent);}
+    if(!$('hereCard')?.dataset.located){
+      $('hereTitle').textContent=el()?'Πού βρίσκομαι;':'Where am I?';
+      $('hereSub').textContent=el()?'Πάτησε εντοπισμό για οδό, περιοχή και ακρίβεια GPS.':'Press locate for street, neighbourhood and GPS accuracy.';
+      $('hereStatus').textContent=el()?'ΕΝΤΟΠΙΣΜΟΣ ΘΕΣΗΣ':'LOCATION';
+    }
+  }
   const calendarText = () => new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Athens',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date()).replace(' ','T');
   function billing() {
     const input = $('thesiArrival'), mins = Number($('thesiMinutes')?.value || 60);
@@ -57,7 +89,7 @@
     const host=$('pressureBars'); if(!host)return;
     const state=window.RoadPulseState||{}, c=state.center||{lat:40.634,lon:22.944};
     const nearThess=Math.abs(c.lat-40.634)<.22&&Math.abs(c.lon-22.944)<.27;
-    const center=Math.abs(c.lat-40.632)<.032&&Math.abs(c.lon-22.943)<.045;
+    const center=Math.abs(c.lat-40.632)<.015&&Math.abs(c.lon-22.943)<.026;
     const day=$('pressureDate')?.value||calendarText().slice(0,10);
     const match=day.match(/^(\d{4})-(\d\d)-(\d\d)$/);if(!match)return;
     const dt=new Date(Date.UTC(Number(match[1]),Number(match[2])-1,Number(match[3]))),wd=dt.getUTCDay();
@@ -85,6 +117,7 @@
       status.textContent=el()?'Χωρίς άδεια':'No permission';
       return;
     }
+    $('hereCard').dataset.located='yes';
     const {lat,lon,accuracy}=detail;
     title.textContent=el()?'Εντοπίστηκε η θέση σου':'Your position located';
     secondary.textContent=(el()?'GPS ακρίβεια ±':'GPS accuracy ±')+Math.round(accuracy)+' m · '+Number(lat).toFixed(5)+', '+Number(lon).toFixed(5);
@@ -106,6 +139,7 @@
     }catch{/* A GPS coordinate is still usable if address lookup is down. */}
   }
   function init() {
+    localize();
     if($('thesiArrival')) {
       $('thesiArrival').value=calendarText().slice(0,16);
       $('thesiArrival').addEventListener('input',billing);
@@ -123,7 +157,7 @@
     document.addEventListener('click',e=>{if(e.target.closest('[data-view="forecast"]'))renderForecast()});
     if($('hereAction')) $('hereAction').addEventListener('click',()=>document.getElementById('locateBtn')?.click());
     if($('pressureRefresh')) $('pressureRefresh').addEventListener('click',renderForecast);
-    if($('langBtn'))$('langBtn').addEventListener('click',()=>{billing();renderForecast()});
+    if($('langBtn'))$('langBtn').addEventListener('click',()=>{localize();billing();renderForecast()});
     window.RoadPulseCivic={bill:billing,forecast:renderForecast};
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
