@@ -1,6 +1,6 @@
 {
   "name": "roadpulse-city-atlas",
-  "version": "3.0.0",
+  "version": "3.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,9 +8,6 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --test tests/*.test.cjs"
-  },
-  "dependencies": {
-    "maplibre-gl": "6.14.0"
   },
   "devDependencies": {
     "vite": "6.3.6"
