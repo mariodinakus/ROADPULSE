@@ -7,7 +7,7 @@
   const money = n => new Intl.NumberFormat(el() ? 'el-GR' : 'en-GB', {style:'currency',currency:'EUR'}).format(n);
   const escape = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const labels={
-    forecast:['Πρόβλεψη','Forecast'],locate:['◎ Εντόπισε τη θέση μου','◎ Find my location'],
+    forecast:['PRESSURE LABS','PRESSURE LABS'],locate:['◎ Εντόπισε τη θέση μου','◎ Find my location'],
     priceHeading:['Πόσο θα πληρώσω;','How much will I pay?'],
     thesiIntro:['Επίσημη χρέωση THESi: 1,70€/ώρα, ανά λεπτό. Ισχύει μόνο σε θέσεις επισκεπτών (λευκή διαγράμμιση).','Official THESi tariff: €1.70/hour, billed by the minute. Only for marked visitor bays (white lines).'],
     arrival:['Έναρξη στάθμευσης','Parking starts'],duration:['Διάρκεια','Duration'],
@@ -98,6 +98,8 @@
     const nowHour=Number(calendarText().slice(11,13)), today=day===calendarText().slice(0,10);
     const usable=slots.filter(s=>!today||s.hour>=nowHour);
     const best=(usable.length?usable:slots).reduce((a,b)=>a.score<=b.score?a:b);
+    const currentSlot=slots.reduce((chosen,s)=>Math.abs(s.hour-nowHour)<Math.abs(chosen.hour-nowHour)?s:chosen);
+    window.dispatchEvent(new CustomEvent('roadpulse:parking-pressure',{detail:{score:currentSlot.score,date:day,scenario:true}}));
     host.innerHTML=slots.map(s=>{
       const label=s.score>=69?(el()?'Υψηλή':'High'):s.score>=49?(el()?'Μέτρια':'Medium'):(el()?'Χαμηλότερη':'Lower');
       return '<div class="pressure-hour" title="'+s.hour+':00 · '+s.score+'/100 · '+label+'"><span class="pressure-number">'+s.score+'</span><div class="pressure-track"><div style="height:'+s.score+'%" class="pressure-fill '+(s.score>=69?'high':s.score>=49?'medium':'low')+'"></div></div><span>'+String(s.hour).padStart(2,'0')+':00</span></div>';
