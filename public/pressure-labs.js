@@ -126,7 +126,7 @@
    }
    error.textContent=previous?txt('Αποτυχία ανανέωσης. Τα προηγούμενα δεδομένα είναι παλιότερα.','Refresh failed; previous snapshot may be stale.'):txt('Δεν έγινε σύνδεση με το TomTom Flow. Δοκίμασε αργότερα.','TomTom Flow could not be reached. Try later.');
    error.hidden=false;
-  }finally{busy=false;btn.disabled=false;if(refreshAfter){refreshAfter=false;if(mode==='traffic'&&window.RoadPulseState?.view==='forecast'){if(busy)refreshAfter=true;else load();}}}
+  }finally{busy=false;btn.disabled=false;if(refreshAfter){refreshAfter=false;if(mode==='traffic'&&window.RoadPulseState?.view==='forecast')load();}}
  }
  function attach(){
   $('labParking')?.addEventListener('click',()=>select('parking'));
@@ -155,7 +155,7 @@
    $('trafficSeverity').textContent=txt('Επίλεξε ενημέρωση για την περιοχή','Load local road samples');
    $('trafficSegmentBars').textContent=txt('Περιμένουμε νέα μετρημένα δεδομένα για το επιλεγμένο σημείο.','Waiting for flow data for the selected point.');
    $('trafficPressureArea').textContent=txt('Σημείο ανάλυσης: ','Analysis centre: ')+coordsDescription();
-   if(mode==='traffic'&&window.RoadPulseState?.view==='forecast')load();
+   if(mode==='traffic'&&window.RoadPulseState?.view==='forecast'){if(busy)refreshAfter=true;else load();}
   });
   $('langBtn')?.addEventListener('click',localize);
   localize();
