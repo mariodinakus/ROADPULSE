@@ -1,0 +1,14 @@
+{
+  "schema": "nexus.v1",
+  "appId": "roadpulse",
+  "name": "ROADPULSE",
+  "url": "https://roadpulse-gray.vercel.app",
+  "capabilities": [
+    "traffic-map",
+    "parking-places",
+    "traffic-incidents"
+  ],
+  "notifications": [],
+  "connection": "read-only",
+  "notice": "Public integration handshake only. No current traffic or parking occupancy is claimed without a verifiable upstream event."
+}
