@@ -1,4 +1,4 @@
-# ROADPULSE 3.5 — The city, decoded.
+# ROADPULSE 3.7 — The city, decoded.
 
 Responsive GR/EN city mobility map for GitHub + Vercel. The new version uses bundled MapLibre GL, a real TomTom Orbis traffic flow overlay, Orbis traffic incidents (when permitted), TomTom Search POI parking data (when permitted), OpenStreetMap map tiles and OSRM routing, plus verified official THESi/ParkPal **external links** for Thessaloniki.
 
@@ -49,3 +49,20 @@ The Parking section has an **explicitly user-initiated** embedded map with two m
 The user can open either in a full external tab if the third-party embedded site fails to render. Embedded map content is operated by THESi/ParkPal; ROADPULSE does not scrape, persist, or infer any real-time vacancies or expose a TomTom credential to the iframe. A dedicated satellite evidence block explains that no licensed high-resolution, timestamped satellite imagery feed is integrated and that image-derived vacancies cannot be assumed to remain vacant. A municipal parking GIS dataset last modified in September 2017 was identified but deliberately **not** presented as a current parking dataset.
 
 The cross-origin frame is requested only after the user selects “View official map”. CSP allows framing the specific THESi site. No general third-party framing is enabled.
+
+## 3.7 — Real field-observation evidence (local-only)
+
+ROADPULSE's Parking Pressure Lab now has **Field Observations** for in-person counting of legal parking bays (total surveyed vs observed empty). The user must explicitly confirm an on-site count and move the map centre to the measured area. Observations are separated by type: THESi-marked on-street bays, other street bays and off-street lots. The THESi type is **user-entered and unverified**, never official provider occupancy.
+
+**Privacy and persistence:** The app stores no individual GPS coordinates or vehicle plates in its records. It stores an approximate 260-metre projected grid ID, the timestamp, parking category, and integer counts using browser `localStorage` (maximum 250 observations, up to 120 days). It uploads **nothing** to Vercel, TomTom, THESi or GitHub. Data stays per browser/device. Export as JSON, remove an individual observation, or erase all local observations.
+
+**Statistical behavior:** At least six records across at least three dates, with at least two samples near the target hour, are required before a sample-based occupancy projection is displayed. A temporal kernel smoother reports the estimated occupied share of the voluntarily observed **sample**, not a live vacancy count, the percentage of all legal bays, or official THESi occupancy. Forecast horizons are now, +30, +60 and +120 minutes. Sensitivity ranges are intentionally **not calibrated confidence intervals**. Predictions are withheld for unsupported areas, parking categories and hours.
+
+A chronological backtest checks only previous observations when predicting subsequent ones; it reports a mean absolute occupancy-percentage-point error only after at least three held-out cases on two different dates. Observations may be biased, user-entered incorrectly or unrepresentative of the neighborhood; the resulting model is not citywide, not independently verified, not an accurate satellite inventory and **not trained on a statistically representative population**. Synthetic test fixtures are used in development but are never published as real occupancy.
+
+Files:
+- `public/parking-evidence-core.js` — input validation, approximate location grid, 120-day retention, prediction, rolling evaluation.
+- `public/parking-evidence.js` / `.css` — in-browser recording, visualization and JSON export.
+- `tests/parking-evidence.test.cjs` — input integrity, geographic/type segregation, limits and backtests.
+
+**Provider availability:** TomTom has an on-street probability API and an off-street availability API, but those products require a separately approved commercial entitlement and coverage verification. The existing traffic key does not guarantee access. Official THESi maps provide legal parking zones, not authenticated public per-bay live vacancy values. Roadpulse intentionally does not scrape these services.
