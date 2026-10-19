@@ -236,7 +236,8 @@
     close();
   });
   $('areaSatelliteAction').addEventListener('click',()=>{
-    document.querySelector('[data-map-style="satellite"]')?.click();
+    if(!current)return;
+    window.dispatchEvent(new CustomEvent('roadpulse:inspect-satellite',{detail:{lat:current.lat,lon:current.lon}}));
   });
   window.addEventListener('roadpulse:inspect-point',e=>inspect(e.detail));
   $('langBtn')?.addEventListener('click',()=>setTimeout(()=>{if(current)render()},0));
