@@ -8,7 +8,7 @@
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const messages={
   hero:['Η πόλη σε αριθμούς.','Read the city in numbers.'],
-  subtitle:['Δύο ανεξάρτητα μοντέλα: ζήτηση στάθμευσης και πραγματική επιβράδυνση σε δείγματα δρόμων.','Two independent models: assumed parking demand and observed slowing on sampled roads.'],
+  subtitle:['Δύο διακριτά εργαστήρια: πρόβλεψη ζήτησης στάθμευσης και βραχυχρόνια πρόβλεψη επιβράδυνσης με ζωντανή μέτρηση TomTom.','Two distinct labs: scenario-based parking demand forecast and short-horizon traffic projection anchored on live TomTom observations.'],
   liveBadge:['LIVE ROAD DATA','LIVE ROAD DATA'],
   trafficTitle:['Πόσο πιέζονται οι δρόμοι;','How much are roads slowing down?'],
   trafficDesc:['Σύγκριση τωρινής ταχύτητας με την ταχύτητα ελεύθερης ροής σε έως 5 κοντινά οδικά τμήματα.','Current versus free-flow speeds from up to five nearby road segments.'],
@@ -95,6 +95,7 @@
   }).join('');
   $('trafficPressureArea').textContent=txt('Σημείο ανάλυσης: ','Analysis centre: ')+coordsDescription();
   updatePeek();
+  if(lastCoords===key(gpsCenter()))window.dispatchEvent(new CustomEvent('roadpulse:traffic-snapshot',{detail:data}));
  }
  async function load(force=false){
   const center=gpsCenter(),k=key(center);
