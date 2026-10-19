@@ -22,7 +22,7 @@ class RasterMap {
   const traffic=document.createElement('div');traffic.className='rp-traffic-pane';this.host.appendChild(traffic);this.trafficPane=traffic;
   const route=document.createElementNS('http://www.w3.org/2000/svg','svg');route.setAttribute('class','rp-route-pane');route.setAttribute('aria-hidden','true');this.host.appendChild(route);this.routePane=route;
   const pins=document.createElement('div');pins.className='rp-pin-pane';this.host.appendChild(pins);this.pinPane=pins;
-  this.loaded=0;this.fallbackTiles=0;this.tiles=new Map();this.trafficTiles=new Map();this.down=null;
+  this.loaded=0;this.fallbackTiles=0;this.satelliteErrorSeen=false;this.tiles=new Map();this.trafficTiles=new Map();this.down=null;
   this._down=e=>{if(e.target.closest('button,a'))return;this.down={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,moved:false};this.host.setPointerCapture?.(e.pointerId);this.host.classList.add('rp-dragging');};
   this._move=e=>{if(!this.down||e.pointerId!==this.down.id)return;const dx=e.clientX-this.down.lastX,dy=e.clientY-this.down.lastY;this.down.lastX=e.clientX;this.down.lastY=e.clientY;if(Math.abs(e.clientX-this.down.x)+Math.abs(e.clientY-this.down.y)>6)this.down.moved=true;
    const center=merc(this.center.lat,this.center.lon,this.zoom),p=unmerc(center.x-dx,center.y-dy,this.zoom);this.center={lat:p.lat,lon:((p.lon+540)%360)-180};this.render();};
@@ -44,7 +44,7 @@ class RasterMap {
    const next=['atlas','night','classic','satellite'].includes(style)?style:'atlas';
    if(this.mapStyle===next)return;
    this.mapStyle=next;this.host.dataset.mapStyle=next;
-   this.tiles.forEach(tile=>tile.remove());this.tiles.clear();this.loaded=0;
+   this.tiles.forEach(tile=>tile.remove());this.tiles.clear();this.loaded=0;this.satelliteErrorSeen=false;
    this.render();
  }
  setPins(pins){this.pinData=Array.isArray(pins)?pins:[];this.renderPins();}
@@ -60,11 +60,17 @@ class RasterMap {
       'https://tile.openstreetmap.org/'+this.zoom+'/'+tileX+'/'+y+'.png';
      img.addEventListener('load',()=>{this.loaded++});
      img.addEventListener('error',()=>{
-       if(img.dataset.fallback==='0'){
-         img.dataset.fallback='1';
+       if(img.dataset.fallback==='0'&&this.mapStyle==='satellite'){
+         img.dataset.fallback='second-source';
+         img.src='https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+this.zoom+'/'+y+'/'+tileX;
+       }else if(img.dataset.fallback==='0'||img.dataset.fallback==='second-source'){
+         img.dataset.fallback='osm';
          img.src='https://basemaps.cartocdn.com/light_all/'+this.zoom+'/'+tileX+'/'+y+'.png';
          this.fallbackTiles++;
-         if(this.mapStyle==='satellite')window.dispatchEvent(new CustomEvent('roadpulse:imagery-error',{detail:{fallback:true}}));
+         if(this.mapStyle==='satellite'&&!this.satelliteErrorSeen){
+           this.satelliteErrorSeen=true;
+           window.dispatchEvent(new CustomEvent('roadpulse:imagery-error',{detail:{fallback:true}}));
+         }
        }
      });this.base.appendChild(img);this.tiles.set(key,img);}img.style.transform='translate('+tx+'px,'+ty+'px)';
     if(this.traffic&&this.zoom>=9&&this.zoom<=18){tNeeded.add(key);let overlay=this.trafficTiles.get(key);if(!overlay){overlay=document.createElement('img');overlay.alt='';overlay.draggable=false;overlay.className='rp-map-tile rp-map-traffic';overlay.src='/api/traffic?z='+this.zoom+'&x='+tileX+'&y='+y+'&theme='+this.theme+'&v='+encodeURIComponent(this.stamp);overlay.addEventListener('error',()=>{overlay.style.visibility='hidden';});this.trafficPane.appendChild(overlay);this.trafficTiles.set(key,overlay);}overlay.style.transform='translate('+tx+'px,'+ty+'px)';}
