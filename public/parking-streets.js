@@ -26,7 +26,7 @@ function planned(){
  const v=$('streetArrival')?.value||'';
  const m=v.match(/^(\d{4}-\d\d-\d\d)T(\d\d):(\d\d)$/);
  if(!m)return null;
- const hour=Number(m[2]);if(hour>23)return null;
+ const hour=Number(m[2])+Number(m[3])/60;if(hour>=24)return null;
  return {date:m[1],hour,raw:v};
 }
 function center(){
@@ -103,6 +103,24 @@ function render(){
  '<h4 class="street-facilities-title">'+t('Εναλλακτικά οργανωμένα πάρκινγκ','Alternative parking facilities')+'</h4>'+
  (S.lots.length?S.lots.slice(0,6).map(facility).join(''):'<p class="street-empty">'+t('Δεν επιστράφηκαν χώροι από OSM. Δες και το THESi.','No OSM facilities returned. Check THESi as well.')+'</p>')+
  '<div class="street-disclaimer">'+t('Οι τιμές 0–100 είναι συγκριτικοί, υποθετικοί δείκτες αναζήτησης. ΔΕΝ είναι ποσοστά πιθανότητας εύρεσης θέσης. Η δορυφορική εικόνα είναι αρχείου, χωρίς γνωστή ώρα λήψης και χωρίς ανίχνευση αυτοκινήτων. Κάθε δρόμος χρειάζεται έλεγχο επιτόπιας σήμανσης.','Scores 0–100 are relative, assumption-based search rankings, NOT probabilities of finding a free bay. Satellite imagery is archival, without verified capture time or vehicle detection. Always check on-site parking restrictions.')+'</div>';
+ learningInfo();
+}
+function learningInfo(){
+ const el=$('streetLearning');if(!el)return;
+ const c=window.RoadPulseEvidenceCore,here=S.lastCenter||{lat:40.63544,lon:22.9368};
+ if(!c){el.textContent=t('Δεν υπάρχει μοντέλο αυτοψιών.','Field observation model not available.');return;}
+ let records=[];
+ try{records=c.sanitizeRecords(JSON.parse(localStorage.getItem('roadpulse.parking.evidence.v1')||'[]'));}catch{}
+ const total=records.length;
+ const covered=records.filter(r=>r.kind==='street'&&r.cell===c.grid(here.lat,here.lon));
+ const days=new Set(covered.map(r=>r.at.slice(0,10))).size;
+ let bt={ready:false};
+ try{bt=c.backtest(records,{lat:here.lat,lon:here.lon,kind:'street'});}catch{}
+ el.textContent=t('LEARNING LAB · ','LEARNING LAB · ')+n(total)+t(' αυτοψίες σε αυτή τη συσκευή · ',' local observations on this device · ')+n(covered.length)+
+  t(' στον επιλεγμένο τομέα σε ',' in the destination area across ')+n(days)+t(' ημέρες. ',' days. ')+
+  (bt.ready?t('Ιστορικό σφάλμα πληρότητας: ','Historical occupancy error: ')+n(bt.maePercentagePoints,1)+t(' ποσοστιαίες μονάδες (μικρό, μεροληπτικό δείγμα). ',' percentage points (small, biased sample). '):
+  t('Ανεπαρκή δείγματα για αξιόπιστη αξιολόγηση. ','Not enough data for a meaningful backtest. '))+
+  t('Δεν υπάρχει συνεχής εκπαίδευση ή live ανάλυση δορυφόρου.','No continuous training or live satellite analysis is active.');
 }
 function language(){
  $('streetHeading').textContent=t('Βρες πού να ψάξεις για πάρκινγκ','Find where to search for parking');
@@ -115,7 +133,7 @@ function language(){
  $('streetLadadika').textContent=t('Λαδάδικα','Ladadika');
  $('streetObservation').textContent=t('Καταχώριση αυτοψίας ↗','Add field observation ↗');
  $('streetExplanation').textContent=t('Ο χρωματισμός βασίζεται σε διαθέσιμους δρόμους OSM, ώρα άφιξης και υποθετικά μοτίβα ζήτησης. Με επαρκείς δικές σου αυτοψίες συνυπολογίζονται τα τοπικά δείγματα. Δεν υπάρχει live δορυφορική ανίχνευση.','Colors combine OSM street context, arrival time, and uncalibrated demand scenarios. Sufficient local observations can influence estimates. No live satellite vehicle detection.');
- $('streetLearning').textContent=t('LEARNING LAB · Οι αυτοψίες αποθηκεύονται μόνο σε αυτή τη συσκευή. Χωρίς κοινή βάση ή αδειοδοτημένες νεότερες λήψεις, δεν υπάρχει συνεχής εκπαίδευση μοντέλου.','LEARNING LAB · Field observations are stored on this device only. No continuous global training exists without a shared database or newly licensed imagery.');
+ learningInfo();
  $('streetMapShortcut').textContent=t('Ⓟ Βρες θέση κοντά στον προορισμό ↗','Ⓟ Find parking near destination ↗');
  if(S.enabled)render();
 }
