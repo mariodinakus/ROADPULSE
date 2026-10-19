@@ -1,4 +1,4 @@
-<!doctype html><html lang="el"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1,viewport-fit=cover"/><meta name="theme-color" content="#f7f8fc"/><meta name="roadpulse-release" content="3.6-thesi-official-maps"/><meta name="description" content="ROADPULSE — Live traffic, events, parking and directions. City mobility intelligence."/><title>ROADPULSE 3 — The city, decoded.</title><link rel="icon" href="/assets/icon.svg" type="image/svg+xml"/><link rel="manifest" href="/manifest.webmanifest"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link rel="stylesheet" href="/style.css"/><link rel="stylesheet" href="/civic.css"/><link rel="stylesheet" href="/pressure-labs.css"/><link rel="stylesheet" href="/thesi-layer.css"/><link rel="stylesheet" href="/prediction-ui.css"/><script src="/raster.js"></script></head>
+<!doctype html><html lang="el"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1,viewport-fit=cover"/><meta name="theme-color" content="#f7f8fc"/><meta name="roadpulse-release" content="3.7-parking-observations"/><meta name="description" content="ROADPULSE — Live traffic, events, parking and directions. City mobility intelligence."/><title>ROADPULSE 3 — The city, decoded.</title><link rel="icon" href="/assets/icon.svg" type="image/svg+xml"/><link rel="manifest" href="/manifest.webmanifest"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link rel="stylesheet" href="/style.css"/><link rel="stylesheet" href="/civic.css"/><link rel="stylesheet" href="/pressure-labs.css"/><link rel="stylesheet" href="/thesi-layer.css"/><link rel="stylesheet" href="/prediction-ui.css"/><link rel="stylesheet" href="/parking-evidence.css"/><script src="/raster.js"></script></head>
 <body data-theme="light">
 <div class="app-shell">
 <header class="topbar">
@@ -80,6 +80,46 @@
 <div id="pressureArea" class="pressure-area">Θεσσαλονίκη</div>
 <div id="pressureBars" class="pressure-bars" role="img" aria-label="Δείκτης εκτιμώμενης πίεσης στάθμευσης ανά δύο ώρες"></div>
 <p id="pressureBest" class="pressure-best"></p><button type="button" id="pressureRefresh" class="subtle-action" data-civic="refreshModel">↻ Ενημέρωση μοντέλου</button><p id="pressureExplain" class="civic-legal"></p></div>
+
+<section id="evidenceRoot" class="evidence-card" aria-label="Parking field observations">
+ <div class="evidence-eyebrow"><span>FIELD OBSERVATIONS / LOCAL ONLY</span><small>NO LIVE SENSORS</small></div>
+ <h3 id="evidenceHeading">Μετρήσεις θέσεων, όχι εικασίες.</h3>
+ <p class="evidence-intro" id="evidenceIntro">Κατέγραψε επιτόπου πόσες νόμιμες θέσεις έλεγξες και πόσες ήταν κενές. Μετακίνησε πρώτα τον χάρτη στο σημείο της αυτοψίας σου.</p>
+ <p id="evidenceRegion" class="evidence-region"></p>
+ <form id="evidenceForm" autocomplete="off">
+  <label class="evidence-field"><span id="evidenceKindLabel">Τύπος νόμιμων θέσεων</span>
+   <select id="evidenceKind" required><option value="street">Άλλος δρόμος</option><option value="thesi">Σημασμένες THESi</option><option value="lot">Οργανωμένο πάρκινγκ</option></select>
+  </label>
+  <div class="evidence-inputs">
+   <label class="evidence-field"><span id="evidenceTotalLabel">Θέσεις που έλεγξα</span><input type="number" id="evidenceTotal" min="1" max="300" step="1" inputmode="numeric" placeholder="20" required/></label>
+   <label class="evidence-field"><span id="evidenceFreeLabel">Πραγματικά κενές</span><input type="number" id="evidenceFree" min="0" max="300" step="1" inputmode="numeric" placeholder="3" required/></label>
+  </div>
+  <label class="evidence-confirm"><input type="checkbox" id="evidenceConfirm" required/><span id="evidenceConfirmLabel">Επιβεβαιώνω επιτόπια καταμέτρηση στην περιοχή που έχω επιλέξει στον χάρτη.</span></label>
+  <button type="submit" id="evidenceSave">+ Καταγραφή παρατήρησης</button>
+ </form>
+ <p id="evidenceNotice" class="evidence-notice" role="status" aria-live="polite"></p>
+ <div class="evidence-stats">
+  <div><small id="evidenceCountLabel">Καταγραφές ζώνης</small><strong id="evidenceCount">0</strong></div>
+  <div><small id="evidenceDaysLabel">Ημέρες με στοιχεία</small><strong id="evidenceDays">0</strong></div>
+  <div><small id="evidenceLatestLabel">Τελευταία</small><strong id="evidenceLatest">—</strong></div>
+ </div>
+ <div class="evidence-forecast">
+  <h4 id="evidenceForecastTitle">Εκτίμηση πληρότητας από αυτοψίες</h4>
+  <div id="evidenceForecastCards" class="evidence-forecast-grid"></div>
+  <p id="evidenceForecastHelp" class="evidence-disclosure"></p>
+  <p id="evidenceValidation" class="evidence-disclosure"></p>
+ </div>
+ <div class="evidence-history">
+  <h4 id="evidenceHistoryTitle">Ιστορικό αυτής της ζώνης</h4>
+  <p id="evidenceEntries" class="evidence-entries"></p>
+ </div>
+ <div class="evidence-actions">
+  <button type="button" id="evidenceExport">↓ Εξαγωγή JSON</button>
+  <button type="button" id="evidenceDelete">Διαγραφή όλων</button>
+ </div>
+ <p id="evidencePrivacy" class="evidence-disclosure">Μόνο στη συσκευή σου. Οι καταγραφές δεν κοινοποιούνται, δεν συγχρονίζονται και δεν είναι επίσημες μετρήσεις THESi.</p>
+ <p class="evidence-disclosure">0–100 = εκτιμώμενο ποσοστό κατειλημμένων θέσεων στο δικό σου δείγμα, όχι πιθανότητα να βρεις θέση σε όλο τον δρόμο.</p>
+</section>
 <div class="civic-card action-list"><h3 data-civic="cityTips">Χρήσιμες κινήσεις</h3><p data-civic="tip1">• Δες τα συμβάντα στην πορεία σου.</p><p data-civic="tip2">• Σύγκρινε THESi και στεγασμένα πάρκινγκ.</p><p data-civic="tip3">• Αν το κέντρο είναι δύσκολο, εξέτασε στάθμευση κοντά σε στάση μετρό.</p><p data-civic="tip4">• Η επιτόπια σήμανση υπερισχύει πάντα.</p><a href="https://www.thessmetro.gr/" rel="noopener noreferrer" target="_blank" data-civic="metro">Μετρό Θεσσαλονίκης ↗</a></div>
 <div id="trafficPressurePanel" role="tabpanel" aria-labelledby="labTraffic" hidden>
 <div class="heading-line"><span>TRAFFIC PRESSURE LAB</span><span class="data-tag" data-pressure-i18n="liveBadge">LIVE ROAD DATA</span></div>
@@ -116,4 +156,4 @@
 </div>
 <nav class="mobile-dock" id="mobileDock"><button data-view="traffic" class="active"><span>◉</span><small data-t="traffic">Κυκλοφορία</small></button><button data-view="incidents"><span>⚑</span><small data-t="incidents">Συμβάντα</small></button><button data-view="parking"><span>Ⓟ</span><small data-t="parking">Στάθμευση</small></button><button data-view="forecast"><span>◷</span><small data-civic="forecast">Πρόβλεψη</small></button><button data-view="routes"><span>↗</span><small data-t="routes">Διαδρομές</small></button></nav>
 <div id="toast" class="toast hidden" role="status"></div>
-</div><script type="module" src="/src/main.js"></script><script defer src="/prediction-engine.js"></script><script defer src="/civic.js"></script><script defer src="/pressure-labs.js"></script><script defer src="/prediction-ui.js"></script><script defer src="/thesi-layer.js"></script></body></html>
+</div><script type="module" src="/src/main.js"></script><script defer src="/prediction-engine.js"></script><script defer src="/civic.js"></script><script defer src="/pressure-labs.js"></script><script defer src="/prediction-ui.js"></script><script defer src="/thesi-layer.js"></script><script defer src="/parking-evidence-core.js"></script><script defer src="/parking-evidence.js"></script></body></html>
