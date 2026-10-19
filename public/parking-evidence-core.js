@@ -94,7 +94,7 @@
     if(totalWeight<.45||nearby<2)return null;
     const share=weighted/totalWeight;
     const variance=Math.max(0,squared/totalWeight-share*share);
-    const width=clamp(Math.round((.18+Math.sqrt(variance)*.6+9/Math.sqrt(prev.length*100))*100),18,45);
+    const width=clamp(Math.round((.10+Math.sqrt(variance)*.45+.40/Math.sqrt(prev.length))*100),14,42);
     const percent=Math.round(share*100);
     return {occupiedPercent:percent,low:clamp(percent-width,0,100),high:clamp(percent+width,0,100),
       sampleCount:prev.length,days:dayCount,latest:prev.at(-1)?.at||null,
