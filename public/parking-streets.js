@@ -53,11 +53,26 @@ function observationInfo(road,when){
 }
 function predictionFor(road,when,where){
  const base=core().priority(road,{...when,lat:road.lat,lon:road.lon});
- const obs=observationInfo(road,when);
- if(base.score===null||!obs)return {...base,observations:null};
- const score=Math.max(3,Math.min(95,Math.round(base.score+(50-obs.occupiedPercent)*0.20)));
+ if(base.score===null)return {...base,observations:null};
+ const previous=observationInfo(road,when);
+ let licensed=null;
+ const trainer=window.RoadPulseSatelliteLearningCore;
+ if(trainer){
+  try{
+   const records=trainer.sanitize(JSON.parse(localStorage.getItem('roadpulse.satelliteLearning.v1')||'[]'));
+   const iso=new Date(when.raw).toISOString();
+   licensed=trainer.estimate(records,{lat:road.lat,lon:road.lon,at:iso});
+  }catch{}
+ }
+ const p=previous?.occupiedPercent,l=licensed?.occupiedPercent;
+ const occupied=(p!=null&&l!=null)?Math.round(.35*p+.65*l):l??p??null;
+ if(occupied===null)return {...base,observations:null};
+ const score=Math.max(3,Math.min(95,Math.round(base.score+(50-occupied)*0.20)));
  return {...base,score,tier:score>=56?'promising':score>=37?'mixed':'difficult',
-  observations:{count:obs.sampleCount,days:obs.days,occupiedPercent:obs.occupiedPercent},calibrated:false};
+  observations:{count:(previous?.sampleCount||0)+(licensed?.sampleCount||0),
+   days:Math.max(previous?.days||0,licensed?.distinctDays||0),occupiedPercent:occupied,
+   source:licensed?'locally learned observations':'local field notes'},
+   calibrated:false,probability:null,source:'heuristic plus time-matched local occupancy observations'};
 }
 function repaint(){
  const m=raster();
@@ -142,6 +157,7 @@ async function loadAt(c,destination){
  if(!Number.isFinite(c.lat)||!Number.isFinite(c.lon))return;
  const id=++S.request;S.busy=true;S.enabled=true;S.lastCenter={lat:c.lat,lon:c.lon};S.destination=destination;S.selected=null;
  S.items=[];S.lots=[];
+ window.dispatchEvent(new CustomEvent('roadpulse:parking-destination',{detail:{lat:c.lat,lon:c.lon,name:destination}}));
  $('streetToggle').textContent=t('Απόκρυψη χρωματισμού','Hide street colors');
  status(t('Εντοπισμός δρόμων και parking από OpenStreetMap…','Finding OSM streets and parking facilities…'));
  render();repaint();
@@ -193,6 +209,7 @@ function init(){
  $('streetFind').addEventListener('click',search);
  $('streetDestination').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();search();}});
  $('streetArrival').addEventListener('change',rerank);
+ window.addEventListener('roadpulse:learning-updated',rerank);
  $('streetLadadika').addEventListener('click',()=>{$('streetDestination').value='Λαδάδικα, Θεσσαλονίκη';loadAt({lat:40.63544,lon:22.9368},t('Λαδάδικα, Θεσσαλονίκη','Ladadika, Thessaloniki'));});
  $('streetToggle').addEventListener('click',()=>{S.enabled=!S.enabled;language();if(S.enabled){if(S.items.length)repaint();else search();}else{S.request++;S.busy=false;repaint();status(t('Ο χρωματισμός είναι κρυμμένος.','Street colors hidden.'));}});
  $('streetSatellite').addEventListener('click',()=>document.querySelector('[data-map-style="satellite"]')?.click());
