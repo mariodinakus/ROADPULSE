@@ -20,10 +20,11 @@ class RasterMap {
   this.host.innerHTML='';this.host.classList.add('rp-raster-host');this.host.dataset.mapStyle=this.mapStyle;
   const base=document.createElement('div');base.className='rp-tile-pane';this.host.appendChild(base);this.base=base;
   const traffic=document.createElement('div');traffic.className='rp-traffic-pane';this.host.appendChild(traffic);this.trafficPane=traffic;
+  const streets=document.createElementNS('http://www.w3.org/2000/svg','svg');streets.setAttribute('class','rp-streets-pane');streets.setAttribute('aria-label','Parking search priority by mapped road segment');this.host.appendChild(streets);this.streetsPane=streets;this.streetData=[];this.streetSelect=null;
   const route=document.createElementNS('http://www.w3.org/2000/svg','svg');route.setAttribute('class','rp-route-pane');route.setAttribute('aria-hidden','true');this.host.appendChild(route);this.routePane=route;
   const pins=document.createElement('div');pins.className='rp-pin-pane';this.host.appendChild(pins);this.pinPane=pins;
   this.loaded=0;this.fallbackTiles=0;this.satelliteErrorSeen=false;this.tiles=new Map();this.trafficTiles=new Map();this.down=null;
-  this._down=e=>{if(e.target.closest('button,a'))return;this.down={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,moved:false};this.host.setPointerCapture?.(e.pointerId);this.host.classList.add('rp-dragging');};
+  this._down=e=>{if(e.target.closest('button,a,.rp-road-line'))return;this.down={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,moved:false};this.host.setPointerCapture?.(e.pointerId);this.host.classList.add('rp-dragging');};
   this._move=e=>{if(!this.down||e.pointerId!==this.down.id)return;const dx=e.clientX-this.down.lastX,dy=e.clientY-this.down.lastY;this.down.lastX=e.clientX;this.down.lastY=e.clientY;if(Math.abs(e.clientX-this.down.x)+Math.abs(e.clientY-this.down.y)>6)this.down.moved=true;
    const center=merc(this.center.lat,this.center.lon,this.zoom),p=unmerc(center.x-dx,center.y-dy,this.zoom);this.center={lat:p.lat,lon:((p.lon+540)%360)-180};this.render();};
   this._up=e=>{if(!this.down||e.pointerId!==this.down.id)return;const state=this.down;this.down=null;this.host.classList.remove('rp-dragging');try{this.host.releasePointerCapture?.(e.pointerId)}catch{};
@@ -46,6 +47,29 @@ class RasterMap {
    this.mapStyle=next;this.host.dataset.mapStyle=next;
    this.tiles.forEach(tile=>tile.remove());this.tiles.clear();this.loaded=0;this.satelliteErrorSeen=false;
    this.render();
+ }
+ setStreets(roads,select){this.streetData=Array.isArray(roads)?roads:[];this.streetSelect=typeof select==='function'?select:null;this.renderStreets();}
+ renderStreets(){
+  const svg=this.streetsPane;if(!svg)return;svg.replaceChildren();
+  const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h||!this.streetData.length)return;
+  svg.setAttribute('viewBox','0 0 '+w+' '+h);
+  const colors={promising:'#1abb81',mixed:'#ffb33f',difficult:'#e75958',restricted:'#83919e',unknown:'#83919e'};
+  for(const road of this.streetData){
+   if(!Array.isArray(road.geometry)||road.geometry.length<2)continue;
+   const points=road.geometry.filter(c=>Array.isArray(c)&&Number.isFinite(c[0])&&Number.isFinite(c[1])).map(c=>this.position(c[1],c[0]));
+   if(points.length<2||!points.some(p=>p.x>-100&&p.x<w+100&&p.y>-100&&p.y<h+100))continue;
+   const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+   line.setAttribute('points',points.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' '));
+   line.setAttribute('class','rp-road-line');line.setAttribute('fill','none');line.setAttribute('stroke',colors[road.tier]||colors.unknown);
+   line.setAttribute('stroke-width',road.tier==='unknown'||road.tier==='restricted'?'4.5':'7');line.setAttribute('stroke-linecap','round');line.setAttribute('stroke-linejoin','round');
+   line.setAttribute('stroke-opacity',road.tier==='unknown'||road.tier==='restricted'?'0.48':'0.95');
+   line.setAttribute('data-street-id',String(road.id));line.setAttribute('tabindex','0');line.setAttribute('role','button');
+   line.setAttribute('aria-label',(road.name||'Road')+' — '+(road.score==null?'unknown':road.score+'/100 scenario search priority'));
+   const tip=document.createElementNS('http://www.w3.org/2000/svg','title');tip.textContent=(road.name||'Road')+' · '+(road.score==null?'Unknown legal parking / occupancy':road.score+'/100 heuristic search priority, NOT live vacancies');line.appendChild(tip);
+   line.addEventListener('click',e=>{e.stopPropagation();this.streetSelect?.(road);});
+   line.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.streetSelect?.(road);}});
+   svg.appendChild(line);
+  }
  }
  setPins(pins){this.pinData=Array.isArray(pins)?pins:[];this.renderPins();}
  setRoute(geometry){this.route=geometry?.coordinates||null;this.renderRoute();}
@@ -76,7 +100,7 @@ class RasterMap {
     if(this.traffic&&this.zoom>=9&&this.zoom<=18){tNeeded.add(key);let overlay=this.trafficTiles.get(key);if(!overlay){overlay=document.createElement('img');overlay.alt='';overlay.draggable=false;overlay.className='rp-map-tile rp-map-traffic';overlay.src='/api/traffic?z='+this.zoom+'&x='+tileX+'&y='+y+'&theme='+this.theme+'&v='+encodeURIComponent(this.stamp);overlay.addEventListener('error',()=>{overlay.style.visibility='hidden';});this.trafficPane.appendChild(overlay);this.trafficTiles.set(key,overlay);}overlay.style.transform='translate('+tx+'px,'+ty+'px)';}
    }
    for(const [k,img]of this.tiles)if(!needed.has(k)){img.remove();this.tiles.delete(k)}for(const [k,img]of this.trafficTiles)if(!tNeeded.has(k)){img.remove();this.trafficTiles.delete(k)}
-   this.renderPins();this.renderRoute();
+   this.renderStreets();this.renderPins();this.renderRoute();
  }
  renderPins(){
   this.pinPane.innerHTML='';
