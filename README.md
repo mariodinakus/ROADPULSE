@@ -39,3 +39,13 @@ The existing **Parking Pressure Lab** and **Traffic Pressure Lab** now include e
 UI: `public/prediction-engine.js` (pure numerical engine), `public/prediction-ui.js` and `public/prediction-ui.css` (presentation), `public/civic.js` and `public/pressure-labs.js` (existing Lab integration). Existing endpoint security, provider limits and server-side TomTom credential handling remain unchanged.
 
 To run local checks: `npm test`. Model unit tests: `tests/prediction.test.cjs`. To turn the scenarios into trustworthy, location-specific statistical predictions, persist sampled speeds with user consent and provider-compliant storage, gather historical parking occupancy from authorized operators/sensors, train on temporal holdouts and publish out-of-sample errors by horizon and geographic segment.
+
+## 3.6 — THESi official maps and satellite evidence
+
+The Parking section has an **explicitly user-initiated** embedded map with two modes sourced from official THESi/ParkPal pages:
+- Visitor (white) bays: https://www.thesi.gr/map/?residents=false
+- Resident (blue) bays: https://www.thesi.gr/map/?visitors=false
+
+The user can open either in a full external tab if the third-party embedded site fails to render. Embedded map content is operated by THESi/ParkPal; ROADPULSE does not scrape, persist, or infer any real-time vacancies or expose a TomTom credential to the iframe. A dedicated satellite evidence block explains that no licensed high-resolution, timestamped satellite imagery feed is integrated and that image-derived vacancies cannot be assumed to remain vacant. A municipal parking GIS dataset last modified in September 2017 was identified but deliberately **not** presented as a current parking dataset.
+
+The cross-origin frame is requested only after the user selects “View official map”. CSP allows framing the specific THESi site. No general third-party framing is enabled.
