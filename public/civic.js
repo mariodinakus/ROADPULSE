@@ -94,7 +94,8 @@
     const match=day.match(/^(\d{4})-(\d\d)-(\d\d)$/);if(!match)return;
     const dt=new Date(Date.UTC(Number(match[1]),Number(match[2])-1,Number(match[3]))),wd=dt.getUTCDay();
     const rain=$('pressureRain')?.checked,event=$('pressureEvent')?.checked;
-    const slots=Array.from({length:9},(_,i)=>{const hr=6+i*2;return {hour:hr,score:demand(hr,wd,center,rain,event)}});
+    const forecast=window.RoadPulsePrediction?.parkingForecast({date:day,lat:c.lat,lon:c.lon,rain,event});
+    const slots=forecast?forecast.points.filter(p=>p.hour>=6&&p.hour<=22&&p.hour%2===0):Array.from({length:9},(_,i)=>{const hr=6+i*2;return {hour:hr,score:demand(hr,wd,center,rain,event)}});
     const nowHour=Number(calendarText().slice(11,13)), today=day===calendarText().slice(0,10);
     const usable=slots.filter(s=>!today||s.hour>=nowHour);
     const best=(usable.length?usable:slots).reduce((a,b)=>a.score<=b.score?a:b);
@@ -102,13 +103,14 @@
     window.dispatchEvent(new CustomEvent('roadpulse:parking-pressure',{detail:{score:currentSlot.score,date:day,scenario:true}}));
     host.innerHTML=slots.map(s=>{
       const label=s.score>=69?(el()?'Υψηλή':'High'):s.score>=49?(el()?'Μέτρια':'Medium'):(el()?'Χαμηλότερη':'Lower');
-      return '<div class="pressure-hour" title="'+s.hour+':00 · '+s.score+'/100 · '+label+'"><span class="pressure-number">'+s.score+'</span><div class="pressure-track"><div style="height:'+s.score+'%" class="pressure-fill '+(s.score>=69?'high':s.score>=49?'medium':'low')+'"></div></div><span>'+String(s.hour).padStart(2,'0')+':00</span></div>';
+      const range=s.low==null?'':' · '+s.low+'–'+s.high;
+      return '<div class="pressure-hour" title="'+s.hour+':00 · '+s.score+'/100'+range+' · '+label+'"><span class="pressure-number">'+s.score+'</span><div class="pressure-track"><div style="height:'+s.score+'%" class="pressure-fill '+(s.score>=69?'high':s.score>=49?'medium':'low')+'"></div></div><span>'+String(s.hour).padStart(2,'0')+':00</span></div>';
     }).join('');
     $('pressureBest').textContent=(el()?'Σχετικά ηπιότερη περίοδος: ':'Relatively quieter window: ')+String(best.hour).padStart(2,'0')+':00 · '+best.score+'/100';
     $('pressureArea').textContent=!nearThess?(el()?'Εκτός Θεσσαλονίκης · γενικό υπόδειγμα':'Outside Thessaloniki · generic baseline'):(center?(el()?'Κέντρο Θεσσαλονίκης':'Thessaloniki centre'):(el()?'Ευρύτερη Θεσσαλονίκη':'Greater Thessaloniki'));
     $('pressureExplain').textContent=el()
-      ? 'Πειραματικός δείκτης 0–100, όχι ποσοστό πληρότητας ή πιθανότητα θέσης. Βασίζεται αποκλειστικά σε υποθέσεις ώρας, ημέρας, περιοχής και στα χειροκίνητα σενάρια βροχής/εκδήλωσης. Δεν έχει εκπαιδευτεί ή ελεγχθεί με μετρημένη πληρότητα δρόμων.'
-      : 'Experimental 0–100 demand-pressure index, not an occupancy percentage or vacancy probability. It uses assumed hour, weekday, area, and manual weather/event scenarios. It has not been trained or validated on measured on-street occupancy.';
+      ? 'Πρόβλεψη ζήτησης 0–100 από χρονικές καμπύλες και χαρακτηριστικά περιοχής, ημέρας, βροχής και εκδηλώσεων. Τα εμφανιζόμενα εύρη είναι ανάλυση ευαισθησίας, όχι 95% διαστήματα εμπιστοσύνης. Δεν είναι πραγματική πληρότητα, πιθανότητα εύρεσης θέσης ή μοντέλο εκπαιδευμένο σε αισθητήρες.'
+      : 'Scenario-based 0–100 forecast from hour, weekday, area, and manually selected rain/event conditions. Ranges reflect assumption sensitivity, not statistical intervals. It does not measure occupancy, estimate vacancy probability, or use trained parking-sensor data.';
   }
   async function locationChanged(detail) {
     const title=$('hereTitle'), secondary=$('hereSub'), status=$('hereStatus');
