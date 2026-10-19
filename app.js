@@ -137,6 +137,13 @@ function bind(){qa('[data-view]').forEach(b=>b.addEventListener('click',()=>acti
  $('searchForm').onsubmit=e=>{e.preventDefault();search($('searchInput').value)};$('searchResults').onclick=e=>{const b=e.target.closest('[data-choice]');if(!b)return;const p=$('searchResults')._items?.[Number(b.dataset.choice)];if(!p)return;st.city=null;st.centerSource='search';st.center={lat:p.lat,lon:p.lon};cityLabel();focusPoint(p.lat,p.lon);window.dispatchEvent(new Event('roadpulse:city'));$('searchInput').value=p.name;$('searchResults').classList.add('hidden');requestData()};document.addEventListener('click',e=>{if(!e.target.closest('.searchbar'))$('searchResults').classList.add('hidden')});window.addEventListener('keydown',e=>{if(e.key==='Escape'){$('searchResults').classList.add('hidden');st.selecting=null;$('mapPickHint').classList.add('hidden')}});
 }
 function init(){document.body.dataset.theme=st.theme;bind();
+ window.addEventListener('roadpulse:inspect-satellite',e=>{
+  const lat=Number(e.detail?.lat),lon=Number(e.detail?.lon);
+  if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>80||Math.abs(lon)>180)return;
+  setMapStyle('satellite');
+  if(map)map.flyTo({center:[lon,lat],zoom:Math.max(map.getZoom(),17),duration:600});
+  else if(raster)raster.setView(lat,lon,Math.max(raster.getZoom(),17));
+ });
  window.addEventListener('roadpulse:inspect-analyse',e=>{
   const lat=Number(e.detail?.lat),lon=Number(e.detail?.lon);
   if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>80||Math.abs(lon)>180)return;
