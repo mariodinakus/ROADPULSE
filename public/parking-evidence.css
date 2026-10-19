@@ -1,0 +1,40 @@
+/* ROADPULSE 3.7 parking observations */
+.evidence-card{margin:16px 0;padding:16px 13px;border-radius:16px;background:var(--citysurface);border:1px solid var(--border)}
+.evidence-eyebrow{display:flex;justify-content:space-between;gap:9px;align-items:center;font-size:9px;letter-spacing:.6px;font-weight:900;color:var(--blue)}
+.evidence-eyebrow small{font-size:8px;color:var(--sub);border:1px solid var(--border);border-radius:5px;padding:5px}
+.evidence-card h3{color:var(--ink);font-size:18px;line-height:1.3;margin:14px 0 6px}
+.evidence-intro,.evidence-disclosure{font-size:10px;color:var(--sub);line-height:1.6;margin:7px 0 11px}
+.evidence-region{font-size:10px;color:var(--blue);font-weight:800;overflow-wrap:anywhere;margin:13px 0}
+.evidence-card form{display:flex;flex-direction:column;gap:12px}
+.evidence-field{display:flex;flex-direction:column;gap:6px;color:var(--sub);font-size:10px;font-weight:750}
+.evidence-field input,.evidence-field select{min-width:0;width:100%;height:41px;padding:0 11px;border-radius:9px;border:1px solid var(--border);background:var(--white);color:var(--ink);font-size:13px}
+.evidence-field input:focus,.evidence-field select:focus{outline:2px solid var(--blue);outline-offset:1px}
+.evidence-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.evidence-confirm{display:flex;align-items:flex-start;gap:9px;font-size:10px;line-height:1.5;color:var(--sub);cursor:pointer}
+.evidence-confirm input{margin:2px 0 0;flex:0 0 14px;accent-color:var(--blue)}
+#evidenceSave{cursor:pointer;border:0;border-radius:10px;background:var(--blue);color:white;text-align:center;font-weight:900;font-size:12px;padding:13px}
+#evidenceSave:focus-visible,.evidence-actions button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.evidence-notice{min-height:0;font-size:10px;color:var(--blue);line-height:1.5;margin:8px 0}
+.evidence-notice[data-error="true"]{color:#ca5548}
+.evidence-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:16px 0}
+.evidence-stats>div{background:var(--white);padding:11px 8px;border-radius:10px;display:flex;flex-direction:column;gap:7px;min-width:0}
+.evidence-stats small{font-size:9px;color:var(--sub);line-height:1.3}
+.evidence-stats strong{font-size:18px;font-variant-numeric:tabular-nums;line-height:1.15;color:var(--ink);overflow-wrap:anywhere}
+.evidence-forecast,.evidence-history{margin-top:12px;border-top:1px solid var(--border);padding-top:15px}
+.evidence-card h4{font-size:12px;color:var(--ink);margin:0 0 12px;line-height:1.4}
+.evidence-forecast-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:9px 0}
+.evidence-forecast-grid>div{padding:11px 3px;border-radius:10px;text-align:center;background:var(--white);display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0}
+.evidence-forecast-grid small{font-size:9px;color:var(--sub)}
+.evidence-forecast-grid strong{font-size:21px;color:var(--ink);font-variant-numeric:tabular-nums}
+.evidence-forecast-grid span{font-size:8px;color:var(--blue);font-weight:800}
+.evidence-entries{margin:0}
+.evidence-entry{padding:10px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);gap:7px}
+.evidence-entry span{display:flex;flex-direction:column;gap:3px}
+.evidence-entry b{font-size:10px;color:var(--ink)}
+.evidence-entry small{font-size:9px;color:var(--sub)}
+.evidence-entry button{cursor:pointer;color:var(--sub);font-size:18px;background:transparent;border:0;border-radius:6px}
+.evidence-entry button:hover{color:#e7615d}
+.evidence-actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 7px}
+.evidence-actions button{cursor:pointer;border:1px solid var(--border);border-radius:9px;background:var(--white);color:var(--ink);font-size:10px;font-weight:850;padding:11px}
+.evidence-actions button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:700px){.evidence-card{padding:13px 10px}.evidence-forecast-grid strong{font-size:18px}.evidence-forecast-grid span{font-size:8px}.evidence-eyebrow{font-size:8px}}
