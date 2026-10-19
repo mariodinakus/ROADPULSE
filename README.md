@@ -1,4 +1,4 @@
-# ROADPULSE 3.7 — The city, decoded.
+# ROADPULSE 3.8 — The city, decoded.
 
 Responsive GR/EN city mobility map for GitHub + Vercel. The new version uses bundled MapLibre GL, a real TomTom Orbis traffic flow overlay, Orbis traffic incidents (when permitted), TomTom Search POI parking data (when permitted), OpenStreetMap map tiles and OSRM routing, plus verified official THESi/ParkPal **external links** for Thessaloniki.
 
@@ -66,3 +66,13 @@ Files:
 - `tests/parking-evidence.test.cjs` — input integrity, geographic/type segregation, limits and backtests.
 
 **Provider availability:** TomTom has an on-street probability API and an off-street availability API, but those products require a separately approved commercial entitlement and coverage verification. The existing traffic key does not guarantee access. Official THESi maps provide legal parking zones, not authenticated public per-bay live vacancy values. Roadpulse intentionally does not scrape these services.
+
+## 3.8 — Satellite basemap and click-through Area Intelligence
+
+**Satellites / aerial imagery:** select `▧ Δορυφόρος / Satellite` in the 2D map style chooser. The raster renderer uses Esri **World Imagery** (public World_Imagery map tiles), first trying `server.arcgisonline.com`, then `services.arcgisonline.com`, and falling back to a conventional street basemap if imagery tiles fail. Both allowed imagery hosts are explicitly listed in `vercel.json`'s image CSP. The imagery is a mosaic of satellite/aerial acquisitions with varying spatial resolution and unspecified individual capture dates in this app; it is **not live**, is not always recent or high-resolution enough to classify individual spaces, and ROADPULSE does **not** detect cars or available spaces using computer vision. Credits to Esri/World Imagery source providers remain visible; external usage is governed by Esri/service conditions.
+
+**Orange circles:** raster-map orange incident pins, which previously only recentered on click, now open the Area Intelligence panel. A click shows the provider-reported incident type, severity, road segment, delay and distance when given, plus nearby traffic analysis from sampled live TomTom flow. Clicking any empty map point inspects that location, while clicking a blue parking marker inspects a mapped facility. Blue clusters still zoom instead of representing free spots. Existing route-selection clicks continue to choose route endpoints.
+
+**Area model disclosure:** the side inspector shows a 0–100 **parking demand scenario** for the selected coordinates over now, 30, 60 and 120 minutes, including a decomposed time/day baseline, urban-centrality assumption, and optional user-selected rain/event scenarios. These are model assumptions, not calibrated parking occupancy or observed vacancies. It separately shows any sufficient user-entered occupancy observations stored in this browser, with explicit provenance. Short-horizon **traffic** projections at +15/30/60/120 minutes require fresh live TomTom flow samples for the same clicked coordinates; missing/stale observations yield no prediction. Projection ranges are sensitivity bands, not calibrated confidence intervals or promised route travel times. The panel lets the user switch into Parking Pressure Lab with the inspected centre.
+
+Security and attribution: map tiles and traffic endpoints are drawn from fixed hosts. The TomTom API key remains server-side and all API rate limits remain unchanged. URLs, GPS and map markers cannot provide real-time parking occupancy by themselves. Provider incidents are not satellite observations.
