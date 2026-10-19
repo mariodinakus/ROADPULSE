@@ -29,7 +29,7 @@ function mapStatus(s){$('mapStatusText').textContent=s;}
 function initMap(){initRaster();}
 function initRaster(){
   clearTimeout(watchdog);if(map){try{map.remove()}catch{}map=null;}
-  if(raster){try{raster.destroy()}catch{}raster=null;}
+  if(raster){try{raster.destroy()}catch{}raster=null;window.RoadPulseRasterActive=null;}
   st.mapReady=true;$('map').classList.remove('rp-globe-mode');
   const center=st.center;$('map').dataset.mapStyle=st.mapStyle;
   if(window.RoadPulseRasterMap){
@@ -38,6 +38,7 @@ function initRaster(){
        onClick:p=>{if(!st.selecting){window.dispatchEvent(new CustomEvent('roadpulse:inspect-point',{detail:{kind:'area',lat:p.lat,lon:p.lon}}));return;}if(st.selecting==='start')st.origin=p;else st.destination=p;st.selecting=null;$('mapPickHint').classList.add('hidden');renderRouteLabels();updateRouteMap();activeView('routes')},
        onMove:p=>{$('zoomLabel').textContent='ZOOM '+raster.getZoom();}
       });
+      window.RoadPulseRasterActive=raster;window.dispatchEvent(new Event('roadpulse:raster-ready'));
       $('mapFallback').classList.add('hidden');mapStatus(tr('online'));updateTrafficLayer();updateRouteMap();refreshPins();$('zoomLabel').textContent='ZOOM '+raster.getZoom();return;
     }catch(error){console.error('ROADPULSE raster initialization:',error)}
   }
