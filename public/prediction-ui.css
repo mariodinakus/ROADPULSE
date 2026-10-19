@@ -1,0 +1,36 @@
+/* Predictive Labs: compact, mobile-friendly forecast layer. */
+.forecast-proof{margin:12px 0 17px;padding:13px;border:1px solid var(--border);border-radius:13px;background:var(--citysurface);font-variant-numeric:tabular-nums}
+.proof-head{display:flex;align-items:flex-start;justify-content:space-between;gap:9px;margin-bottom:12px}
+.proof-head strong{font-size:10px;letter-spacing:.5px;color:var(--ink)}
+.proof-head span{max-width:140px;font-size:9px;color:var(--sub);text-align:right}
+.proof-columns{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.proof-columns>div{padding:11px;border-radius:10px;background:var(--white);display:flex;flex-direction:column;gap:4px;min-width:0}
+.proof-columns small{font-size:9px;color:var(--sub)}
+.proof-columns b{font-family:'Space Grotesk',sans-serif;font-size:23px;letter-spacing:-.8px;color:var(--ink)}
+.proof-columns span{font-size:10px;color:var(--blue);font-weight:800}
+.forecast-proof>p{font-size:10px;line-height:1.55;color:var(--sub);margin:12px 0 0}
+.forecast-lab{margin-top:24px;padding:16px 13px;border:1px solid var(--border);border-radius:15px;background:var(--citysurface)}
+.forecast-lab-header{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:9px;font-weight:900;letter-spacing:.5px;color:var(--blue)}
+.forecast-labelled{font-size:8px;border:1px solid var(--border);padding:4px 7px;border-radius:7px;color:var(--sub);white-space:nowrap}
+.forecast-lab h3{font-size:17px;line-height:1.35;margin:13px 0 5px;color:var(--ink)}
+.forecast-intro,.forecast-disclaimer{font-size:10px;line-height:1.6;color:var(--sub);margin:0 0 14px}
+.forecast-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.forecast-horizon{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;text-align:center;border:1px solid var(--border);border-radius:10px;padding:11px 2px;background:var(--white);color:var(--ink);cursor:pointer}
+.forecast-horizon.selected{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue);background:var(--blue-lite)}
+.forecast-horizon:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.forecast-horizon small{font-size:9px;line-height:1.3;color:var(--sub)}
+.forecast-horizon b{font-family:'Space Grotesk',sans-serif;font-size:22px;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.forecast-horizon sup{font-family:inherit;font-size:9px;letter-spacing:0;position:relative;top:-1px}
+.forecast-horizon span{font-size:9px;color:var(--blue);font-weight:800;white-space:nowrap}
+.forecast-detail{padding:12px;margin-top:10px;background:var(--white);border-radius:10px;color:var(--ink);font-size:11px;line-height:1.55}
+.forecast-detail.forecast-empty{color:var(--sub)}
+.forecast-trend{display:flex;justify-content:space-between;gap:9px;align-items:center;margin-bottom:5px}
+.forecast-trend strong{font-size:11px}
+.forecast-trend span{font-size:10px;color:var(--blue);font-weight:800;text-align:right}
+.forecast-detail>small{color:var(--sub);font-size:9px}
+.forecast-visual{color:var(--blue);padding:8px 2px 0;overflow:hidden}
+.forecast-visual svg{display:block;width:100%;max-height:165px;height:auto}
+.forecast-visual text{fill:var(--sub);font-size:10px}
+.forecast-disclaimer{margin:12px 0 0}
+@media(max-width:700px){.forecast-lab{padding:13px 10px}.forecast-grid{gap:5px}.forecast-horizon b{font-size:19px}.forecast-horizon span{font-size:8px}.forecast-trend{flex-direction:column;align-items:flex-start;gap:2px}}
+@media(prefers-reduced-motion:reduce){.forecast-horizon{transition:none}}
