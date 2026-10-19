@@ -1,0 +1,45 @@
+/* Parking Finder — native, WebGL-free ROADPULSE 4.0 */
+.rp-streets-pane{position:absolute;inset:0;z-index:3;width:100%;height:100%;overflow:visible;pointer-events:none}
+.rp-road-line{pointer-events:stroke;cursor:pointer;paint-order:stroke;filter:drop-shadow(0 1px 1px #00192bb3)}
+.rp-road-line:hover,.rp-road-line:focus-visible{stroke-width:11;stroke-opacity:1;outline:none;filter:drop-shadow(0 1px 4px #fff)}
+.rp-route-pane{z-index:4;pointer-events:none}.rp-pin-pane{z-index:5}
+.street-map-shortcut{position:absolute;top:132px;left:32px;z-index:9;border:1px solid #c0ebff;background:#0e2542ed;color:#fff;border-radius:20px;font-size:12px;font-weight:800;padding:11px 15px;box-shadow:0 7px 25px #0b234a42}
+.street-finder{background:linear-gradient(145deg,#0c2039,#193656);color:#f0f7ff;border:1px solid #45789a;box-shadow:0 14px 32px #08132324;border-radius:17px;padding:15px;margin-bottom:22px;display:flex;flex-direction:column;gap:9px}
+.street-finder-kicker{color:#6ddac0;font-size:9px;font-weight:900;letter-spacing:2px}
+.street-finder h3{font-size:18px;color:white;letter-spacing:-.5px;line-height:1.2;margin:0}
+.street-finder>p{font-size:11px;line-height:1.55;margin:0;color:#bcd1df}
+.street-field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.street-field span{font-size:10px;font-weight:800;color:#bbd6e7}
+.street-field input{width:100%;min-width:0;background:#0b2138;color:white;padding:10px;border:1px solid #52708c;border-radius:9px;font-size:12px;color-scheme:dark}
+.street-field input:focus-visible{outline:2px solid #65ddc8}
+.street-row{display:flex;gap:7px;align-items:flex-end}
+.street-primary{border:none;background:#4ce0ba;color:#082a34;font-weight:900;border-radius:9px;padding:10px 12px;white-space:nowrap;font-size:10px;min-height:39px}
+.street-actions{display:flex;gap:6px;flex-wrap:wrap}
+.street-actions button,.street-observation{border:1px solid #4a7a95;border-radius:9px;padding:8px 9px;background:#224864;color:#edfaff;font-weight:800;font-size:10px}
+.street-legend{display:flex;gap:9px;flex-wrap:wrap;font-size:10px;color:#e0efff}
+.street-legend span{display:inline-flex;align-items:center;gap:4px}
+.street-legend i{width:8px;height:8px;border-radius:50%}
+.street-status{font-size:10px!important;color:#84e7cc!important;line-height:1.6}
+.street-results-heading{display:flex;justify-content:space-between;gap:8px;align-items:start;margin:8px 0}
+.street-results-heading b{font-size:12px}
+.street-results-heading small{max-width:45%;text-align:right;color:#a9cada;font-size:9px}
+.street-result{position:relative;background:#102a46;border:1px solid #355c77;border-radius:11px;margin:7px 0;padding:9px}
+.street-result.selected{border-color:#66e4c4;background:#1d4763}
+.street-result-select{background:transparent;color:white;border:0;padding:0;display:flex;width:100%;gap:9px;align-items:center;text-align:left}
+.street-result-copy{flex:1;min-width:0}
+.street-result-copy b{font-size:11px;display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.street-result-copy small{display:block;font-size:9px;color:#b3c8d7;line-height:1.5}
+.street-result-select strong{font-size:12px;white-space:nowrap}
+.street-color{width:8px;height:30px;border-radius:4px;flex-shrink:0}
+.street-result-meta{font-size:9px;color:#c5d6e2;padding:6px 0 0 17px}
+.street-route{display:block;text-align:right;font-size:10px!important;color:#77e6ce!important;font-weight:800;text-decoration:none!important}
+.street-facilities-title{font-size:12px;color:white;margin:12px 0 1px}
+.street-facility{background:#112d45;border:1px solid #345573;border-radius:9px;margin:5px 0;padding:10px;display:flex;align-items:center;justify-content:space-between;gap:9px}
+.street-facility b{font-size:11px;display:block}
+.street-facility small{display:block;font-size:9px;line-height:1.5;color:#b2cada}
+.street-facility a{font-size:10px;color:#80e6cf;white-space:nowrap}
+.street-empty,.street-disclaimer,.street-learning{font-size:10px;line-height:1.55;color:#bbd2df;padding:9px;border:1px dashed #507187;border-radius:9px}
+.street-learning{background:#0c2a45}
+.street-observation{align-self:flex-start}
+@media(max-width:940px){.street-map-shortcut{top:110px;left:14px;max-width:50%;padding:8px 10px;font-size:10px}.street-row{flex-wrap:wrap}.street-primary{width:100%}}
+@media(max-width:600px){.street-map-shortcut{top:72px;left:10px;max-width:80%;font-size:10px}.street-finder{padding:12px}}
