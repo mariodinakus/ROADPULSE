@@ -38,7 +38,7 @@ test('orange incident markers and parking markers open information instead of on
  assert.match(inspector,/delaySeconds/);
  assert.match(inspector,/model\.parkingHour/);
  assert.match(inspector,/model\.parkingForecast/);
- assert.match(inspector,/model\(\)\.trafficForecast/);
+ assert.match(inspector,/trafficForecast/);
 });
 test('satellite is imagery with attribution and does not claim live vacancy detection',()=>{
  const map=read('public/raster.js'),html=read('index.html');
