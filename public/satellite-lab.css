@@ -1,0 +1,44 @@
+/* Satellite Observatory + Learning Lab, contained inside Parking pane */
+.sat-lab{margin:0 0 20px;background:linear-gradient(150deg,#081322,#112943 80%);border-radius:16px;padding:15px;border:1px solid #41647f;color:#ecf6ff;display:flex;flex-direction:column;gap:10px;box-shadow:0 15px 24px #11253d22}
+.sat-kicker{font-weight:900;letter-spacing:1.4px;color:#8fd5ff;font-size:10px}
+.sat-lab h3{font-size:18px;letter-spacing:-.4px;line-height:1.3;color:#fff;margin:0}
+.sat-lab h4{font-size:14px;color:#f1fcff;margin:0}
+.sat-lab p,.sat-lab details{font-size:11px;line-height:1.6;color:#bad1e1;margin:0}
+.sat-lab-head{display:flex;gap:8px;justify-content:space-between;align-items:center;padding:10px;background:#152f4c;border:1px solid #42617d;border-radius:10px}
+.sat-lab-head div{min-width:0}
+.sat-lab-head small{font-size:9px;color:#93b5c9;display:block}
+.sat-lab-head strong{display:block;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sat-lab-head button{border:1px solid #6abac9;background:#1a4e5f;border-radius:9px;color:#fff;font-size:9px;font-weight:800;padding:10px;white-space:normal;max-width:140px}
+.sat-status{font-size:10px!important;color:#7aeed0!important}
+.sat-timeline{display:flex;flex-direction:column;gap:6px;padding:8px 0}
+.sat-timeline span{font-size:10px;font-weight:800;color:#d8effa}
+.sat-timeline input{accent-color:#54c3ef;width:100%}
+.sat-timeline small{font-size:10px;color:#96c6e3;text-align:right}
+.sat-scene-details{border:1px solid #345b79;padding:10px;border-radius:10px;background:#092039}
+.sat-scene-details a{display:block;padding-top:8px;color:#77dcef;font-size:10px;font-weight:800;overflow-wrap:anywhere}
+.sat-scene-kpis,.sat-learning-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:8px}
+.sat-scene-kpis div,.sat-learning-grid div{border:1px solid #2c5771;border-radius:8px;background:#193a55;padding:8px}
+.sat-scene-kpis small,.sat-learning-grid small{display:block;font-size:9px;color:#add1df;line-height:1.4}
+.sat-scene-kpis strong,.sat-learning-grid b{display:block;font-size:12px;margin-top:4px;color:#e7faff}
+.sat-archive-note{font-size:10px;color:#a9d4ed;background:#153550;border-radius:9px;padding:9px;line-height:1.5}
+.sat-separator{height:1px;background:#365d77;margin:5px 0}
+.sat-learning-result{background:#16344c;padding:9px;border-radius:9px;margin:7px 0;border:1px solid #365c75}
+.sat-learning-result strong{display:block;color:#fff;font-size:12px}
+.sat-learning-result span{display:block;color:#aad3e4;margin-top:3px;font-size:10px;line-height:1.5}
+.sat-learning-foot{font-size:10px!important}
+.sat-history{border-bottom:1px solid #2a536c;padding:6px 2px;font-size:10px!important}
+.sat-lab summary{cursor:pointer;font-size:11px;color:#e4f8ff;padding:5px 0}
+.sat-learning-form{display:flex;flex-direction:column;gap:10px}
+.sat-learning-form label{display:flex;flex-direction:column;gap:4px;min-width:0}
+.sat-learning-form label>span{color:#d2e6f2;font-size:10px;font-weight:700;line-height:1.4}
+.sat-learning-form input:not([type="checkbox"]),.sat-learning-form select{min-width:0;width:100%;border:1px solid #4d718b;border-radius:8px;padding:9px;background:#09233b;color:#fff;color-scheme:dark;font-size:11px}
+.sat-count-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sat-count-row label{min-width:0}
+#satImageryInputs{display:flex;flex-direction:column;gap:9px;border:1px dashed #64a5b8;border-radius:9px;padding:10px}
+#satImageryInputs[hidden]{display:none}
+.sat-learning-form .sat-checkbox{display:flex;flex-direction:row;align-items:start;gap:8px}
+.sat-checkbox input{accent-color:#4fe4bc;margin-top:2px}
+.sat-learning-form button{border:none;background:#62debf;color:#072637;padding:11px 12px;border-radius:9px;font-size:11px;font-weight:900}
+.sat-form-message{font-size:10px!important;color:#71f3c8!important}
+.sat-form-message[data-error="true"]{color:#ffb9b9!important}
+@media(max-width:600px){.sat-lab{padding:12px}.sat-lab-head{flex-wrap:wrap}.sat-lab-head button{max-width:none}}
