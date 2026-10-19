@@ -1,4 +1,4 @@
-# ROADPULSE 3.0 — The city, decoded.
+# ROADPULSE 3.5 — The city, decoded.
 
 Responsive GR/EN city mobility map for GitHub + Vercel. The new version uses bundled MapLibre GL, a real TomTom Orbis traffic flow overlay, Orbis traffic incidents (when permitted), TomTom Search POI parking data (when permitted), OpenStreetMap map tiles and OSRM routing, plus verified official THESi/ParkPal **external links** for Thessaloniki.
 
@@ -27,3 +27,15 @@ All map data © OpenStreetMap contributors (ODbL), traffic © TomTom. THESi and 
 The default 2D map runs on a self-hosted, dependency-free raster tile renderer (`public/raster.js`) and OpenStreetMap tiles, with Carto fallback. It supports dragging, zoom, live TomTom raster traffic overlay, clickable map coordinates, incident/parking markers, and route polylines. It does not depend on MapLibre, WebGL or a CDN JavaScript library. 3D Globe loads MapLibre lazily on explicit request and reverts to the raster map if unavailable. TomTom's key stays server-side in Vercel and only traffic imagery is served through `/api/traffic`.
 
 **Tile usage:** © OpenStreetMap contributors (ODbL); respect OSM tile usage policy. Traffic © TomTom. The non-WebGL fallback does not represent parking occupancy.
+
+## 3.5 — Predictive Pressure Labs
+
+The existing **Parking Pressure Lab** and **Traffic Pressure Lab** now include explicit *projections*.
+
+**Parking Pressure** uses a deterministic, explainable hour-of-day/day-of-week demand curve with an urban-centre proximity factor and two optional user-defined scenarios (rain and local event). It provides 24 hourly scores (0–100), a quieter/busier daytime comparison, and sensitivity ranges. **It is not parking occupancy, vacant-space probability, or a trained model.** No live parking-occupancy dataset is present.
+
+**Traffic Pressure** starts with sampled TomTom Traffic Flow Segment Data (up to five road segments around the selected map point) from `/api/pressure`. It provides projections for +15, +30, +60, and +120 minutes, combining measured current slowdown with exponential persistence decay toward an *assumed*, location- and weekday-aware time profile. It declines to forecast if the input is missing, non-live, or more than 12 minutes old. **These are unvalidated model scenarios, not proven future traffic estimates.** The low/high ranges are sensitivity bands, **not** statistically calibrated confidence intervals.
+
+UI: `public/prediction-engine.js` (pure numerical engine), `public/prediction-ui.js` and `public/prediction-ui.css` (presentation), `public/civic.js` and `public/pressure-labs.js` (existing Lab integration). Existing endpoint security, provider limits and server-side TomTom credential handling remain unchanged.
+
+To run local checks: `npm test`. Model unit tests: `tests/prediction.test.cjs`. To turn the scenarios into trustworthy, location-specific statistical predictions, persist sampled speeds with user consent and provider-compliant storage, gather historical parking occupancy from authorized operators/sensors, train on temporal holdouts and publish out-of-sample errors by horizon and geographic segment.
