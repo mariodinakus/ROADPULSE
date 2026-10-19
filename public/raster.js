@@ -40,7 +40,13 @@ class RasterMap {
  zoomIn(){this.setZoom(this.zoom+1);}zoomOut(){this.setZoom(this.zoom-1);}
  setZoom(z){this.zoom=clamp(Math.round(z),1,19);this.render();this.onMove?.({...this.center});}
  setTraffic(on,theme=this.theme,stamp=''){const changed=this.traffic!==!!on||this.theme!==theme||this.stamp!==stamp;this.traffic=!!on;this.theme=theme;this.stamp=stamp;this.trafficPane.style.display=on?'block':'none';if(changed){this.trafficTiles.forEach(x=>x.remove());this.trafficTiles.clear();this.render();}}
- setMapStyle(style){this.mapStyle=['atlas','night','classic'].includes(style)?style:'atlas';this.host.dataset.mapStyle=this.mapStyle;}
+ setMapStyle(style){
+   const next=['atlas','night','classic','satellite'].includes(style)?style:'atlas';
+   if(this.mapStyle===next)return;
+   this.mapStyle=next;this.host.dataset.mapStyle=next;
+   this.tiles.forEach(tile=>tile.remove());this.tiles.clear();this.loaded=0;
+   this.render();
+ }
  setPins(pins){this.pinData=Array.isArray(pins)?pins:[];this.renderPins();}
  setRoute(geometry){this.route=geometry?.coordinates||null;this.renderRoute();}
  focusRoute(points){if(!points?.length)return;const lat=points.reduce((n,p)=>n+p[1],0)/points.length,lon=points.reduce((n,p)=>n+p[0],0)/points.length;this.setView(lat,lon,Math.max(11,Math.min(this.zoom,14)));}
@@ -49,7 +55,18 @@ class RasterMap {
    const c=merc(this.center.lat,this.center.lon,this.zoom),max=Math.pow(2,this.zoom),minX=Math.floor((c.x-w/2)/TILE)-1,maxX=Math.ceil((c.x+w/2)/TILE)+1,minY=Math.floor((c.y-h/2)/TILE)-1,maxY=Math.ceil((c.y+h/2)/TILE)+1;
    const needed=new Set(),tNeeded=new Set();
    for(let x=minX;x<=maxX;x++)for(let y=minY;y<=maxY;y++){if(y<0||y>=max)continue;const tileX=(x%max+max)%max,key=this.zoom+'/'+x+'/'+y,tx=Math.round(x*TILE-c.x+w/2),ty=Math.round(y*TILE-c.y+h/2);needed.add(key);
-    let img=this.tiles.get(key);if(!img){img=document.createElement('img');img.alt='';img.draggable=false;img.decoding='async';img.className='rp-map-tile';img.dataset.fallback='0';img.src='https://tile.openstreetmap.org/'+this.zoom+'/'+tileX+'/'+y+'.png';img.addEventListener('load',()=>{this.loaded++});img.addEventListener('error',()=>{if(img.dataset.fallback==='0'){img.dataset.fallback='1';img.src='https://basemaps.cartocdn.com/light_all/'+this.zoom+'/'+tileX+'/'+y+'.png';this.fallbackTiles++}});this.base.appendChild(img);this.tiles.set(key,img);}img.style.transform='translate('+tx+'px,'+ty+'px)';
+    let img=this.tiles.get(key);if(!img){img=document.createElement('img');img.alt='';img.draggable=false;img.decoding='async';img.className='rp-map-tile';img.dataset.fallback='0';img.src=this.mapStyle==='satellite'?
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+this.zoom+'/'+y+'/'+tileX:
+      'https://tile.openstreetmap.org/'+this.zoom+'/'+tileX+'/'+y+'.png';
+     img.addEventListener('load',()=>{this.loaded++});
+     img.addEventListener('error',()=>{
+       if(img.dataset.fallback==='0'){
+         img.dataset.fallback='1';
+         img.src='https://basemaps.cartocdn.com/light_all/'+this.zoom+'/'+tileX+'/'+y+'.png';
+         this.fallbackTiles++;
+         if(this.mapStyle==='satellite')window.dispatchEvent(new CustomEvent('roadpulse:imagery-error',{detail:{fallback:true}}));
+       }
+     });this.base.appendChild(img);this.tiles.set(key,img);}img.style.transform='translate('+tx+'px,'+ty+'px)';
     if(this.traffic&&this.zoom>=9&&this.zoom<=18){tNeeded.add(key);let overlay=this.trafficTiles.get(key);if(!overlay){overlay=document.createElement('img');overlay.alt='';overlay.draggable=false;overlay.className='rp-map-tile rp-map-traffic';overlay.src='/api/traffic?z='+this.zoom+'&x='+tileX+'&y='+y+'&theme='+this.theme+'&v='+encodeURIComponent(this.stamp);overlay.addEventListener('error',()=>{overlay.style.visibility='hidden';});this.trafficPane.appendChild(overlay);this.trafficTiles.set(key,overlay);}overlay.style.transform='translate('+tx+'px,'+ty+'px)';}
    }
    for(const [k,img]of this.tiles)if(!needed.has(k)){img.remove();this.tiles.delete(k)}for(const [k,img]of this.trafficTiles)if(!tNeeded.has(k)){img.remove();this.trafficTiles.delete(k)}
