@@ -92,7 +92,6 @@
   sceneDisplay();renderModel();
  }
  async function loadScenes(){
-  if(STATE.loading)return;
   STATE.loading=true;const run=++STATE.loadingSeq;
   catalogueStatus(t('Ανάκτηση πραγματικών χρονικών μεταδεδομένων από Earth Search…','Fetching acquisition metadata from Earth Search…'));
   const loc=STATE.coord;
@@ -117,7 +116,7 @@
    if(run!==STATE.loadingSeq)return;
    catalogueStatus(t('Η υπηρεσία δορυφορικού καταλόγου δεν απάντησε. Δεν εμφανίζουμε επινοημένες λήψεις.','Satellite catalogue currently unavailable. No synthetic acquisitions are displayed.'));
    STATE.scenes=[];sceneDisplay();
-  }finally{STATE.loading=false;}
+  }finally{if(run===STATE.loadingSeq)STATE.loading=false;}
  }
  function sourceChange(){
   const imagery=$('satSource')?.value==='licensed-imagery';
@@ -170,7 +169,7 @@
    const lat=Number(e.detail?.lat),lon=Number(e.detail?.lon);
    if(!Number.isFinite(lat)||!Number.isFinite(lon))return;
    STATE.coord={lat,lon};STATE.place=String(e.detail?.name||t('Επιλεγμένη περιοχή','Selected area')).slice(0,90);
-   $('satCloudArea').textContent=STATE.place;STATE.scenes=[];STATE.index=0;sceneDisplay();renderModel();loadScenes();
+   $('satCloudArea').textContent=STATE.place;STATE.scenes=[];STATE.index=0;STATE.loadingSeq++;STATE.loading=false;sceneDisplay();renderModel();loadScenes();
   });
   window.addEventListener('roadpulse:city',()=>{
    if(STATE.place.includes('Λαδάδικα')&&$('streetDestination')?.value.includes('Λαδάδικα'))return;
